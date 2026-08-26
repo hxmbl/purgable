@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"os"
@@ -13,9 +14,26 @@ const target = "PURGABLE"
 
 // Stats tracks what happened during a run.
 type Stats struct {
-	Found   int
-	Deleted int
-	Skipped int
+	Found    int
+	Deleted  int
+	Shredded int
+	Skipped  int
+}
+
+// Action represents a user choice for a purgable directory.
+type Action int
+
+const (
+	ActionDelete Action = iota
+	ActionShred
+	ActionSkip
+	ActionExit
+)
+
+// ActionAll applies the same action to all remaining matches without prompting.
+type ActionAll struct {
+	Action Action
+	All    bool
 }
 
 // ValidateRoot ensures the supplied root exists, is accessible, and is a
@@ -32,7 +50,7 @@ func ValidateRoot(root string) (os.FileInfo, error) {
 }
 
 // Find walks root recursively (without following symlinks) and returns the
-// paths of every regular file whose basename is exactly "PURGABLE".
+// paths of directories containing a regular file named exactly "PURGABLE".
 //
 // Filesystem errors encountered while traversing are reported to w and do not
 // abort the walk.
@@ -46,7 +64,7 @@ func Find(root string, w io.Writer) ([]string, error) {
 		// d.Type() is the Lstat type, so symlinks are never regular files and
 		// symlinked directories are never descended into.
 		if d.Type().IsRegular() && d.Name() == target {
-			matches = append(matches, path)
+			matches = append(matches, filepath.Dir(path))
 		}
 		return nil
 	})
@@ -56,8 +74,8 @@ func Find(root string, w io.Writer) ([]string, error) {
 	return matches, nil
 }
 
-// Purge finds PURGABLE files under root, asks for confirmation on each (via
-// in), and deletes confirmed files using remove. It returns a summary.
+// Purge finds PURGABLE-marked directories under root, asks for an action on each
+// (via in), and performs the action using remove and shred. It returns a summary.
 func Purge(root string, in io.Reader, out, warn io.Writer, remove func(string) error) (Stats, error) {
 	if _, err := ValidateRoot(root); err != nil {
 		return Stats{}, err
@@ -70,28 +88,163 @@ func Purge(root string, in io.Reader, out, warn io.Writer, remove func(string) e
 
 	stats := Stats{Found: len(matches)}
 	if len(matches) == 0 {
-		fmt.Fprintln(out, "No PURGABLE files found.")
+		fmt.Fprintln(out, "No PURGABLE directories found.")
 		return stats, nil
 	}
 
 	reader := bufio.NewReader(in)
-	for _, p := range matches {
-		fmt.Fprintf(out, "Delete %s? [y/N] ", p)
-		line, rerr := reader.ReadString('\n')
-		if rerr != nil && rerr != io.EOF {
-			return stats, fmt.Errorf("reading input: %w", rerr)
+	var defaultAction *ActionAll
+
+	for _, dir := range matches {
+		var action Action
+		var all bool
+
+		if defaultAction != nil {
+			action = defaultAction.Action
+			all = defaultAction.All
+		} else {
+			fmt.Fprintf(out, "Action for %s [d/s/k/e]? ", dir)
+			line, rerr := reader.ReadString('\n')
+			if rerr != nil && rerr != io.EOF {
+				return stats, fmt.Errorf("reading input: %w", rerr)
+			}
+			ans := strings.ToLower(strings.TrimSpace(line))
+			if ans == "" {
+				// Default to skip on empty input
+				action = ActionSkip
+			} else {
+				action, all = parseAction(ans)
+				if action == ActionExit {
+					if all {
+						// e-ALL is just exit
+						return stats, nil
+					}
+					// e without -ALL also exits
+					return stats, nil
+				}
+				if action == -1 {
+					fmt.Fprintf(out, "  invalid action %q, skipping\n", ans)
+					action = ActionSkip
+				}
+			}
 		}
-		answer := strings.ToLower(strings.TrimSpace(line))
-		if answer == "y" {
-			if derr := remove(p); derr != nil {
-				fmt.Fprintf(out, "  failed to delete %s: %v\n", p, derr)
+
+		if all {
+			defaultAction = &ActionAll{Action: action, All: true}
+		}
+
+		switch action {
+		case ActionDelete:
+			if derr := removeDir(dir); derr != nil {
+				fmt.Fprintf(out, "  failed to delete %s: %v\n", dir, derr)
 				stats.Skipped++
 			} else {
 				stats.Deleted++
 			}
-		} else {
+		case ActionShred:
+			if serr := shredDir(dir); serr != nil {
+				fmt.Fprintf(out, "  failed to shred %s: %v\n", dir, serr)
+				stats.Skipped++
+			} else {
+				stats.Shredded++
+			}
+		case ActionSkip:
 			stats.Skipped++
+		case ActionExit:
+			return stats, nil
 		}
 	}
 	return stats, nil
+}
+
+// parseAction parses the user input into an Action and whether -ALL was specified.
+func parseAction(s string) (Action, bool) {
+	all := false
+	if strings.HasSuffix(s, "-all") {
+		all = true
+		s = strings.TrimSuffix(s, "-all")
+	}
+	switch s {
+	case "d":
+		return ActionDelete, all
+	case "s":
+		return ActionShred, all
+	case "k":
+		return ActionSkip, all
+	case "e":
+		return ActionExit, all
+	default:
+		return -1, false
+	}
+}
+
+// removeDir removes the directory and all its contents.
+func removeDir(path string) error {
+	return os.RemoveAll(path)
+}
+
+// shredDir securely deletes the contents of the directory.
+// Note: This cannot guarantee physical destruction on SSDs, flash storage,
+// or filesystems with copy-on-write/snapshots. It overwrites regular files
+// with random data before removal. The PURGABLE marker file is never shredded.
+func shredDir(path string) error {
+	return filepath.WalkDir(path, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// Skip the directory itself at the top level
+		if p == path {
+			return nil
+		}
+		// Never shred the PURGABLE marker
+		if filepath.Base(p) == target {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode().IsRegular() {
+			if err := shredFile(p); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// shredFile overwrites a regular file with random data then removes it.
+func shredFile(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	size := info.Size()
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Overwrite with random data in 64KB chunks
+	buf := make([]byte, 64*1024)
+	written := int64(0)
+	for written < size {
+		n := int64(len(buf))
+		if written+n > size {
+			n = size - written
+		}
+		if _, err := rand.Read(buf[:n]); err != nil {
+			return err
+		}
+		if _, err := f.Write(buf[:n]); err != nil {
+			return err
+		}
+		written += n
+	}
+	// Ensure data hits disk
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	return os.Remove(path)
 }
