@@ -16,8 +16,12 @@ builds:
     binary: purgable
 
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    format: tar.gz
+  - name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    formats: ["tar.gz"]
     files:
       - LICENSE*
 
@@ -30,14 +34,14 @@ changelog:
 brews:
   - name: purgable
     repository:
-      owner: hxmbl
+      owner: Hxmbl
       name: homebrew-tap
-      branch: main
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    homepage: "https://github.com/hxmbl/purgable"
+    commit_author:
+      name: hxmbl
+      email: hxmbl@users.noreply.github.com
+    homepage: "https://github.com/Hxmbl/purgable"
     description: "Recursively find files named exactly PURGABLE and ask before deleting them."
-    license: "MIT"
-    install: |
-      bin.install "purgable"
+    license: MIT
     test: |
-      system "#{bin}/purgable", "--help"
+      system "#{bin}/purgable --help"
+    skip_upload: true
