@@ -110,19 +110,11 @@ func Purge(root string, in io.Reader, out, warn io.Writer, remove func(string) e
 			}
 			ans := strings.ToLower(strings.TrimSpace(line))
 			if ans == "" {
-				// Default to skip on empty input
 				action = ActionSkip
 			} else {
-				action, all = parseAction(ans)
-				if action == ActionExit {
-					if all {
-						// e-ALL is just exit
-						return stats, nil
-					}
-					// e without -ALL also exits
-					return stats, nil
-				}
-				if action == -1 {
+				var ok bool
+				action, all, ok = parseAction(ans)
+				if !ok {
 					fmt.Fprintf(out, "  invalid action %q, skipping\n", ans)
 					action = ActionSkip
 				}
@@ -158,23 +150,23 @@ func Purge(root string, in io.Reader, out, warn io.Writer, remove func(string) e
 }
 
 // parseAction parses the user input into an Action and whether -ALL was specified.
-func parseAction(s string) (Action, bool) {
-	all := false
+// It returns ok=false for unrecognised input.
+func parseAction(s string) (action Action, all, ok bool) {
 	if strings.HasSuffix(s, "-all") {
 		all = true
 		s = strings.TrimSuffix(s, "-all")
 	}
 	switch s {
 	case "d":
-		return ActionDelete, all
+		return ActionDelete, all, true
 	case "s":
-		return ActionShred, all
+		return ActionShred, all, true
 	case "k":
-		return ActionSkip, all
+		return ActionSkip, all, true
 	case "e":
-		return ActionExit, all
+		return ActionExit, all, true
 	default:
-		return -1, false
+		return 0, false, false
 	}
 }
 
@@ -215,18 +207,23 @@ func shredDir(path string) error {
 
 // shredFile overwrites a regular file with random data then removes it.
 func shredFile(path string) error {
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	size := info.Size()
 	f, err := os.OpenFile(path, os.O_WRONLY, 0)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	defer f.Close()
 
-	// Overwrite with random data in 64KB chunks
+	size, err := f.Seek(0, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
 	buf := make([]byte, 64*1024)
 	written := int64(0)
 	for written < size {
@@ -242,7 +239,6 @@ func shredFile(path string) error {
 		}
 		written += n
 	}
-	// Ensure data hits disk
 	if err := f.Sync(); err != nil {
 		return err
 	}

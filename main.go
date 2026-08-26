@@ -5,12 +5,15 @@ import (
 	"os"
 )
 
+var version = "v1.4"
+
 func usage() {
 	fmt.Fprint(os.Stderr, `purgable - find directories marked with PURGABLE and act on them
 
 Usage:
   purgable <directory>
   purgable --help | -h
+  purgable --version | -v
 
 Recursively scans <directory> for regular files named exactly "PURGABLE"
 (case-sensitive, no extension). Each such file marks its containing directory
@@ -34,7 +37,8 @@ Actions:
   e-ALL    Exit immediately (equivalent to e).
 
 Options:
-  -h, --help   Show this help and exit.
+  -h, --help      Show this help and exit.
+  -v, --version   Show version and exit.
 
 Exit codes:
   0  completed (regardless of actions taken)
@@ -46,8 +50,12 @@ Exit codes:
 func main() {
 	args := os.Args[1:]
 	for _, a := range args {
-		if a == "--help" || a == "-h" {
+		switch a {
+		case "--help", "-h":
 			usage()
+			return
+		case "--version", "-v":
+			fmt.Printf("purgable %s\n", version)
 			return
 		}
 	}

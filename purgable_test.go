@@ -433,3 +433,77 @@ func TestMissingRootDirectory(t *testing.T) {
 		t.Fatalf("expected no work done, got %+v", stats)
 	}
 }
+
+func TestParseAction(t *testing.T) {
+	tests := []struct {
+		input   string
+		want    Action
+		wantAll bool
+		wantOk  bool
+	}{
+		{"d", ActionDelete, false, true},
+		{"s", ActionShred, false, true},
+		{"k", ActionSkip, false, true},
+		{"e", ActionExit, false, true},
+		{"d-all", ActionDelete, true, true},
+		{"s-all", ActionShred, true, true},
+		{"k-all", ActionSkip, true, true},
+		{"e-all", ActionExit, true, true},
+		{"x", 0, false, false},
+		{"", 0, false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got, gotAll, gotOk := parseAction(tt.input)
+			if got != tt.want || gotAll != tt.wantAll || gotOk != tt.wantOk {
+				t.Errorf("parseAction(%q) = (%v, %v, %v), want (%v, %v, %v)",
+					tt.input, got, gotAll, gotOk, tt.want, tt.wantAll, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestValidateRoot(t *testing.T) {
+	t.Run("missing directory", func(t *testing.T) {
+		_, err := ValidateRoot(filepath.Join(t.TempDir(), "nope"))
+		if err == nil {
+			t.Fatal("expected error for missing directory")
+		}
+	})
+
+	t.Run("file not directory", func(t *testing.T) {
+		dir := t.TempDir()
+		f := filepath.Join(dir, "file")
+		if err := os.WriteFile(f, []byte("x"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		_, err := ValidateRoot(f)
+		if err == nil {
+			t.Fatal("expected error for file")
+		}
+	})
+
+	t.Run("valid directory", func(t *testing.T) {
+		dir := t.TempDir()
+		info, err := ValidateRoot(dir)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !info.IsDir() {
+			t.Fatal("expected directory info")
+		}
+	})
+}
+
+func TestShredFileDisappeared(t *testing.T) {
+	dir := t.TempDir()
+	f := filepath.Join(dir, "vanish.txt")
+	if err := os.WriteFile(f, []byte("secret"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Remove before shred
+	os.Remove(f)
+	if err := shredFile(f); err != nil {
+		t.Fatalf("shredFile should handle missing file gracefully: %v", err)
+	}
+}
