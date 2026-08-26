@@ -1,0 +1,43 @@
+version: 2
+
+project_name: purgable
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+    binary: purgable
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: tar.gz
+    files:
+      - LICENSE*
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+
+brews:
+  - name: purgable
+    repository:
+      owner: hxmbl
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/hxmbl/purgable"
+    description: "Recursively find files named exactly PURGABLE and ask before deleting them."
+    license: "MIT"
+    install: |
+      bin.install "purgable"
+    test: |
+      system "#{bin}/purgable", "--help"
