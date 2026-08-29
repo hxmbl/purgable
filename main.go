@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var version = "v1.4"
+var version = "v1.5"
 
 func usage() {
 	fmt.Fprint(os.Stderr, `purgable - find directories marked with PURGABLE and act on them
