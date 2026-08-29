@@ -8,7 +8,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
+
+var shredBufPool = sync.Pool{New: func() any {
+	b := make([]byte, 64*1024)
+	return &b
+}}
 
 const target = "PURGABLE"
 
@@ -224,7 +230,8 @@ func shredFile(path string) error {
 		return err
 	}
 
-	buf := make([]byte, 64*1024)
+	bufp := shredBufPool.Get().(*[]byte)
+	buf := *bufp
 	written := int64(0)
 	for written < size {
 		n := int64(len(buf))
@@ -232,13 +239,16 @@ func shredFile(path string) error {
 			n = size - written
 		}
 		if _, err := rand.Read(buf[:n]); err != nil {
+			shredBufPool.Put(bufp)
 			return err
 		}
 		if _, err := f.Write(buf[:n]); err != nil {
+			shredBufPool.Put(bufp)
 			return err
 		}
 		written += n
 	}
+	shredBufPool.Put(bufp)
 	if err := f.Sync(); err != nil {
 		return err
 	}
