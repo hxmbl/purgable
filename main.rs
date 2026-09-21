@@ -57,6 +57,8 @@ pub fn find(root: &str, warn: &mut impl io::Write) -> io::Result<Vec<PathBuf>> {
             matches.push(entry.path().parent().unwrap().to_path_buf());
         }
     }
+    matches.sort();
+    matches.dedup();
     Ok(matches)
 }
 
