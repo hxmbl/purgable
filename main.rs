@@ -1,9 +1,10 @@
+use rand::rng;
+use rand::RngExt;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use walkdir::{DirEntry, WalkDir};
-use rand::Rng;
 
 pub const TARGET: &str = "PURGABLE";
 const SHRED_BUF_SIZE: usize = 64 * 1024;
@@ -92,7 +93,7 @@ pub fn purge(
     for dir in &matches {
         let dir_str = dir.to_string_lossy().to_string();
         let mut all = false;
-    let action = if let Some(da) = &default_action {
+        let action = if let Some(da) = &default_action {
             da.action
         } else {
             write!(out, "Action for {} [d/s/k/e]? ", dir_str)?;
@@ -151,9 +152,9 @@ pub fn purge(
 
 pub fn parse_action(s: &str) -> (Action, bool, bool) {
     let mut all = false;
-    let s = if s.ends_with("-all") {
+    let s = if let Some(stripped) = s.strip_suffix("-all") {
         all = true;
-        &s[..s.len() - 4]
+        stripped
     } else {
         s
     };
@@ -209,7 +210,7 @@ fn shred_file(path: &Path) -> io::Result<()> {
 
     let mut buf = vec![0u8; SHRED_BUF_SIZE];
     let mut written: u64 = 0;
-    let mut rng = rand::thread_rng();
+    let mut rng = rng();
 
     while written < size {
         let n = std::cmp::min(SHRED_BUF_SIZE as u64, size - written) as usize;
@@ -711,15 +712,17 @@ fn main() {
     let stats = match purge(root, &mut stdin_lock, &mut stdout, &mut stderr) {
         Ok(s) => s,
         Err(e) => {
-            writeln!(stderr, "error: {}", e).unwrap();
+            let _ = writeln!(stderr, "error: {}", e);
             std::process::exit(1);
         }
     };
 
-    writeln!(
+    if let Err(e) = writeln!(
         stdout,
         "\nDone. Found {}, deleted {}, shredded {}, skipped {}.",
         stats.found, stats.deleted, stats.shredded, stats.skipped
-    )
-    .unwrap();
+    ) {
+        let _ = writeln!(stderr, "error: failed to write summary: {}", e);
+        std::process::exit(1);
+    }
 }
