@@ -136,6 +136,13 @@ Details worth knowing:
 - Colour is disabled when output is not a terminal, and honours `NO_COLOR` and
   `TERM=dumb`. Piped and redirected output is always plain.
 
+### Threads
+
+Scanning, measuring, and emptying directories all use every core, because the
+work is almost entirely waiting on the filesystem rather than computing
+anything. Set `PURGABLE_JOBS` to a number between 1 and 64 to cap it, which is
+worth doing when a scan is competing with a build for the same disk.
+
 ### Actions
 
 Method and scope are independent: pick how to destroy the data, and whether the
