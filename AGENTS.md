@@ -67,14 +67,39 @@ The project has two GitHub Actions workflows:
   - Creates GitHub release with assets
   - Generates and pushes Homebrew formula
 
+## Project Layout
+
+Single binary crate using the standard Cargo `src/` layout.
+
+- `src/main.rs` - Entry point only: calls `cli::run()`
+- `src/cli.rs` - `VERSION`, usage text, `parse_args`, command dispatch
+- `src/config.rs` - Policy config file: `Config`, `Policy`, `load_config`
+- `src/marker.rs` - The `PURGABLE` marker file and its provenance format
+- `src/discovery.rs` - `validate_root`, `find`, policy matching
+- `src/mark.rs` - `mark`, `unmark`, `list`
+- `src/purge.rs` - The interactive review loop
+- `src/prompt.rs` - Prompt box, action legend, result rows
+- `src/style.rs` - ANSI styling, width measurement, path shortening
+- `src/size.rs` - Size accounting and human-readable formatting
+- `src/shred.rs` - Destructive filesystem operations
+- `src/test_support.rs` - Test fixtures shared across modules
+
+Unit tests live in a `#[cfg(test)] mod tests` inside the module they cover.
+
+Destructive operations are confined to `src/shred.rs`. The `PURGABLE` marker is
+never shredded or cleared on its own: it is metadata about a directory, so
+`clear_dir` and `shred_dir` deliberately leave it in place.
+
 ## Dependencies
 
 - `rand` 0.10 - Random number generation for shredding
 - `walkdir` 2 - Recursive directory traversal
+- `libc` 0.2 - Terminal width via `ioctl`
+- `serde` + `toml` - Policy config file parsing
 - `tempfile` 3 (dev) - Temporary directory creation for tests
 
 ## Version Management
 
 - Update version in `Cargo.toml`
-- Update `VERSION` constant in `main.rs`
+- Update `VERSION` constant in `src/cli.rs`
 - Tag the commit with `vX.Y.Z` to trigger release workflow
