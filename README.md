@@ -6,6 +6,13 @@ Mark disposable directories automatically, then decide what to do with them.
 `node_modules`, virtualenvs — drops a `PURGABLE` marker in each, and then asks
 you what to do with them. You keep the decision; the tool does the finding.
 
+It only finds what it can prove is disposable. Every policy needs a build-system
+file next to the directory, or a file only that tool writes inside it, before it
+will match — which is how it tells Cargo's `target` apart from
+`linux/kernel/drivers/target`, both real directories with the same name.
+[`will_delete.txt`](will_delete.txt) is the full audit of what that rules out and
+what it allows.
+
 ## Install
 
 ```sh
@@ -44,6 +51,25 @@ purgable --help | -h
 purgable --version | -v
 ```
 
+### What it will delete
+
+The starter config ships with 40 policies, and
+[`will_delete.txt`](will_delete.txt) is the full audit: every directory name a
+1,237-line list of candidates proposed, with a verdict for each one and the guard
+that justifies it. Of 1,100 unique names, **86 can be marked and 930 cannot**:
+
+| verdict | unique | meaning |
+|---------|-------:|---------|
+| POLICY  | 86  | a policy matches it, when its guard passes |
+| PATH    | 84  | a nested path like `target/debug/deps`, covered by its parent |
+| EXCLUDED | 293 | deliberately never matched, reason given |
+| CANNOT-MATCH | 45 | a file, a glob, or a symlink the traversal cannot mark |
+| NO POLICY | 592 | no tool in the default set creates this name |
+
+So the short answer: purgable deletes build output, dependency trees, and caches,
+and it will not touch your downloads, your logs, your vendored source, or any
+directory it cannot first prove is disposable.
+
 ### mark
 
 Walks the tree and applies every enabled policy from `~/.config/purgable.toml`,
@@ -51,10 +77,16 @@ writing a `PURGABLE` marker into each directory that matches and is large enough
 
 ```
 $ purgable mark ~/Projects
-  marked        10.0G  /Users/me/Projects/winnow-alpha/native/src-tauri/target (cargo-target)
-  would mark     561M  /Users/me/Projects/purgable/target (cargo-target)
+  3 matched  10.6G total
+  ─────────────────────────────────────────────────────
+              size  action          policy            path
+  ─────────────────────────────────────────────────────
+  [ 1/3 ]     10.0G  would mark      cargo-target      .../native/src-tauri/target
+  [ 2/3 ]      561M  would mark      cargo-target      ~/Projects/purgable/target
+  [ 3/3 ]      112M  already marked  node-modules      ~/Projects/web/node_modules
 
-Matched 3. 1 new, 2 already marked. Run `purgable review` to decide what to do.
+  Done.  2 marked  1 already marked
+  run `purgable review ~/Projects` to decide what to do
 ```
 
 Directories that already carry a marker are left alone, so `mark` is safe to
@@ -137,8 +169,8 @@ beyond the delete. **Use `d` to reclaim space; use `s` or `x` for secrets.**
 ## Policies
 
 Policies live in `~/.config/purgable.toml` (override the path with
-`$PURGABLE_CONFIG`). Run `purgable init` to write a starter file with
-`cargo-target`, `node-modules`, and `python-venv` policies.
+`$PURGABLE_CONFIG`). Run `purgable init` to write a starter file, which ships
+with 40 policies covering the common ecosystems.
 
 ```toml
 [defaults]
@@ -149,7 +181,7 @@ enabled = true
 name = "cargo-target"
 dir_name = "target"
 require_sibling = ["Cargo.toml"]
-require_child_any = [".rustc_info.json", "debug", "release", "CACHE"]
+require_child_any = [".rustc_info.json", "debug", "release", "CACHE", "incremental"]
 ```
 
 | Key                  | Meaning                                                |
@@ -163,17 +195,62 @@ require_child_any = [".rustc_info.json", "debug", "release", "CACHE"]
 | `min_size`           | Overrides `defaults.min_size` for this policy           |
 | `enabled`            | Set `false` to disable without deleting                 |
 
+`require_sibling` and `require_sibling_any` are both applied, so a policy can
+demand a `package.json` *and* a bundler config. `require_child_any` is an
+`or`, so it cannot say "both of these" — which is why build systems that share
+a directory name rely on the sibling check instead.
+
 Policies are tried in file order and the first match wins, so put specific rules
-above general ones.
+above general ones. A per-policy `min_size` also beats `--min-size`, so leave it
+off policies you want `--min-size` to keep controlling. Use `--min-size 50M` to
+sweep the smaller caches; `purgable unmark --all` when a policy overreaches.
 
-### Why `require_sibling` matters
+### Why the guards matter
 
-A directory called `target` is only Cargo build output if its parent has a
-`Cargo.toml`. Without that check, real source trees get swept up: in a Linux
-kernel checkout, `drivers/target`, `include/target`, and `fs/target` are all
-directories named `target` containing actual code, and Xcode's
-`XCBuildData/target` collides too. The starter config requires both a
-`Cargo.toml` sibling and a build-artifact child.
+Directory names like `build`, `target`, `dist` and `out` are shared by dozens of
+tools, and they are also the names of real source directories. `require_sibling`
+is what keeps a source tree that merely happens to be called `target` out of the
+results:
+
+- In a Linux kernel checkout, `drivers/target`, `include/target` and
+  `Documentation/target` are directories named `target` containing actual code.
+  Only a `Cargo.toml` sibling makes `target` Cargo build output.
+- `linux/kernel/tools/build` contains a `Build` subdirectory, which is why the
+  Xcode policy requires `Index.noindex` or `ModuleCache.noindex` instead of
+  settling for `Build`.
+- `dist` is where bundlers put output, and also where some projects park release
+  archives and checksums they care about. The `js-bundle` policy demands a
+  `package.json`, a bundler or TypeScript config, and an entry point inside.
+- `bin` is never matched at all: virtualenvs, committed scripts and half the
+  command line tools on a system have one.
+
+### What is deliberately not matched
+
+The shipped config only deletes what it can prove is disposable. Left alone:
+
+- **User data** — `downloads`, `images`, `thumbnails`, `previews`, `videos`,
+  `renders`, `samples`, `data`. A `Downloads` directory is exactly the thing
+  never to automate.
+- **Checked-in source** — `packages`, `deps`, `dependencies`, `third_party`,
+  `external`, `sources`, `src`, `lib`, `scripts`.
+- **Records** — `logs`, `reports`, `snapshots`, `fixtures`, `archives`. These
+  can be the only account of what happened.
+- **Tool home directories** — `~/.cargo`, `~/.rustup`, `~/.gradle`, `~/.m2`,
+  `~/.ivy2`, `~/.sbt`, `~/.nuget`, `~/.gem`, `~/.bundle`, `~/.mix`, `~/.hex`,
+  `~/.poetry`, `~/.pyenv`, `~/.uv`, `~/.terraform.d`, `~/.pulumi`,
+  `~/.serverless`, `~/.aws-sam`, `~/.docker`, `~/.vercel`. These mix caches with
+  credentials, installed tools, or deployment state — `~/.cargo` holds your
+  `cargo install`ed binaries, `~/.gradle` can hold repository passwords, and
+  `~/.pulumi` holds infrastructure state. Clear the cache subdirectory with the
+  tool that owns it instead: `cargo cache`, `uv cache clean`, `go clean
+  -modcache`, `docker builder prune`, `bazel clean --expunge`.
+- **Tracked files** — `Package.resolved`, `Podfile.lock`, `.dockerignore`. These
+  are files rather than directories, so they can never be marked, and deleting
+  them changes your build.
+
+A per-project Gradle `.gradle` and Terraform `.terraform` *are* matched, since
+the build-system sibling tells them apart from the tool home directories of the
+same name.
 
 ## Markers
 

@@ -11,7 +11,7 @@ use crate::purge::purge;
 use crate::size::parse_size;
 
 /// Reported by `--version` / `-v`. Kept in step with `version` in Cargo.toml.
-pub(crate) const VERSION: &str = "v2.0";
+pub(crate) const VERSION: &str = "v2.1";
 
 pub(crate) fn usage() {
     eprint!(

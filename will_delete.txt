@@ -1,0 +1,1506 @@
+# will_delete.txt — what purgable will delete, and what it will not
+
+Audit of a 1,237-line list of 1,100 unique directory names, against the 40 policies in the shipped default config.
+
+Every name is given a verdict, derived from the policies in `src/config.rs` rather than by hand. If you add a policy, this file needs a new line to match it. The original list is recoverable by stripping the verdict column from the index at the end.
+
+To see the real thing on your own machine:
+
+```sh
+purgable mark ~ --dry-run     # writes nothing, prints every candidate
+purgable review ~             # only now can anything be deleted
+```
+
+`mark` only writes a `PURGABLE` marker file. Nothing is destroyed until you answer a prompt in `review`.
+
+## Summary
+
+| verdict | unique | of list | meaning |
+|---------|-------:|--------:|---------|
+| **POLICY** | 86 | 98 | a shipped policy matches this name, when its guard passes |
+| **PATH** | 84 | 84 | a nested path like `target/debug/deps`: covered by its parent when that parent matches |
+| **EXCLUDED** | 293 | 329 | deliberately never matched, reason given below |
+| **CANNOT-MATCH** | 45 | 47 | a file, a glob, or a symlink the traversal cannot mark |
+| **NO POLICY** | 592 | 679 | no tool in the default set creates this name |
+| **total** | 1100 | 1237 | |
+
+**86 of 1100 names can be marked — 40 policies.** A further 84 are nested paths that come along when their parent matches. The other 930 cannot, which is the point: the list was mostly a list of things that should never have been in it.
+
+## What purgable will delete
+
+Each name below is matched by a policy. Most policies also require a marker before they will match: a build-system file next to the directory, or a file only that tool writes inside it. That guard is what stops `linux/kernel/drivers/target` from being treated as Cargo build output.
+
+The exceptions are marked *no guard* below: `.cache`, `.pytest_cache`, `.vite` and friends are dot-directories that belong to no other convention, so there is nothing to tell them apart from and nothing to confuse them with. None of them is a name a source tree would use.
+
+| name | matched by | guard that makes it safe |
+|------|-----------|---------------------------|
+| `.cxx` | `android-native-build` | sib* `build.gradle`, `build.gradle.kts`, `CMakeLists.txt`, `.cxx`, `.externalNativeBuild` and child `debug`, `release`, `json` |
+| `.externalNativeBuild` | `android-native-build` | sib* `build.gradle`, `build.gradle.kts`, `CMakeLists.txt`, `.cxx`, `.externalNativeBuild` and child `debug`, `release`, `json` |
+| `.angular` | `angular-cache` | sib `angular.json` and child `cache` |
+| `dist-newstyle` | `cabal-dist` | sib* `cabal.project`, `cabal.project.local`, `stack.yaml`, `package.yaml` and child `build`, `packagedb`, `cache` |
+| `.cache` _(x2)_ | `cache-dir` | no guard, unique to one tool |
+| `target` _(x2)_ | `cargo-target`, `maven-target`, `sbt-target` | `cargo-target` — sib `Cargo.toml` and child `.rustc_info.json`, `debug`, `release`, `CACHE`, `incremental`<br>`maven-target` — sib `pom.xml` and child `classes`, `maven-status`, `generated-sources`, `maven-archiver`, `test-classes`<br>`sbt-target` — sib* `build.sbt`, `project.clj`, `deps.edn` and child `classes`, `test-classes`, `streams`, `resolution-cache` |
+| `_build` | `cmake-build`, `meson-build`, `elixir-build` | `cmake-build` — sib* `CMakeLists.txt` and child `CMakeCache.txt`<br>`meson-build` — child `meson-private`, `meson-info`, `meson-logs`<br>`elixir-build` — sib `mix.exs` and child `lib`, `consolidated`, `rebar3` |
+| `build` _(x2)_ | `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` | `cmake-build` — sib* `CMakeLists.txt` and child `CMakeCache.txt`<br>`ninja-build` — child `build.ninja`<br>`meson-build` — child `meson-private`, `meson-info`, `meson-logs`<br>`xcode-derived-data` — child `Index.noindex`, `ModuleCache.noindex`, `SDKStatCaches.noindex`<br>`gradle-build` — sib* `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts` and child `intermediates`, `tmp`, `outputs`, `generated`, `reports`, `kotlin`, `libs`, `classes`, `js`<br>`js-bundle` — sib `package.json` and sib* `tsconfig.json`, `vite.config.js`, `vite.config.ts`, `vite.config.mjs`, `next.config.js`, `next.config.mjs`, `svelte.config.js`, `rollup.config.js`, `webpack.config.js`, `astro.config.mjs`, `nuxt.config.ts`, `angular.json` and child `index.html`, `index.js`, `main.js`, `assets`, `.vite` |
+| `cmake-build` | `cmake-build` | sib* `CMakeLists.txt` and child `CMakeCache.txt` |
+| `cmake-build-debug` | `cmake-build` | sib* `CMakeLists.txt` and child `CMakeCache.txt` |
+| `cmake-build-minsizerel` | `cmake-build` | sib* `CMakeLists.txt` and child `CMakeCache.txt` |
+| `cmake-build-release` | `cmake-build` | sib* `CMakeLists.txt` and child `CMakeCache.txt` |
+| `cmake-build-relwithdebinfo` | `cmake-build` | sib* `CMakeLists.txt` and child `CMakeCache.txt` |
+| `out` | `cmake-build`, `ninja-build`, `meson-build`, `js-bundle` | `cmake-build` — sib* `CMakeLists.txt` and child `CMakeCache.txt`<br>`ninja-build` — child `build.ninja`<br>`meson-build` — child `meson-private`, `meson-info`, `meson-logs`<br>`js-bundle` — sib `package.json` and sib* `tsconfig.json`, `vite.config.js`, `vite.config.ts`, `vite.config.mjs`, `next.config.js`, `next.config.mjs`, `svelte.config.js`, `rollup.config.js`, `webpack.config.js`, `astro.config.mjs`, `nuxt.config.ts`, `angular.json` and child `index.html`, `index.js`, `main.js`, `assets`, `.vite` |
+| `Pods` | `cocoapods` | sib* `Podfile`, `Podfile.lock` |
+| `ccache` | `compiler-cache` | child `caches`, `stats`, `cache`, `lock`, `state`, `ccache.conf`, `sccache.conf`, `2`, `3`, `4` |
+| `distcc` | `compiler-cache` | child `caches`, `stats`, `cache`, `lock`, `state`, `ccache.conf`, `sccache.conf`, `2`, `3`, `4` |
+| `sccache` | `compiler-cache` | child `caches`, `stats`, `cache`, `lock`, `state`, `ccache.conf`, `sccache.conf`, `2`, `3`, `4` |
+| `.jest-cache` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `coverage-html` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `coverage-json` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `coverage-xml` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `htmlcov` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `lcov-report` | `coverage-report` | sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `obj` _(x3)_ | `dotnet-obj` | child `project.assets.json`, `project.nuget.cache` |
+| `.gradle` _(x2)_ | `gradle-project-cache` | sib* `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`, `gradlew` and child `caches`, `buildOutputCleanup`, `daemon`, `native`, `wrapper` |
+| `_site` | `jekyll-site` | sib* `_config.yml`, `_config.yaml`, `_config.toml`, `Gemfile` and child `index.html`, `assets`, `feed.xml` |
+| `dist` | `js-bundle` | sib `package.json` and sib* `tsconfig.json`, `vite.config.js`, `vite.config.ts`, `vite.config.mjs`, `next.config.js`, `next.config.mjs`, `svelte.config.js`, `rollup.config.js`, `webpack.config.js`, `astro.config.mjs`, `nuxt.config.ts`, `angular.json` and child `index.html`, `index.js`, `main.js`, `assets`, `.vite` |
+| `.astro` | `js-tool-cache` | no guard, unique to one tool |
+| `.babel-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.bun` | `js-tool-cache` | no guard, unique to one tool |
+| `.bun-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.cache-loader` | `js-tool-cache` | no guard, unique to one tool |
+| `.gatsby-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.jekyll-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.parcel-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.pnpm` | `js-tool-cache` | no guard, unique to one tool |
+| `.pnpm-store` _(x2)_ | `js-tool-cache` | no guard, unique to one tool |
+| `.rspack-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.sass-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.swc` | `js-tool-cache` | no guard, unique to one tool |
+| `.vite` | `js-tool-cache` | no guard, unique to one tool |
+| `.vite-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.webpack-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.yarn-cache` | `js-tool-cache` | no guard, unique to one tool |
+| `.next` | `next-build` | sib* `next.config.js`, `next.config.mjs`, `next.config.ts`, `package.json` and child `build-manifest.json`, `cache`, `server`, `static` |
+| `node_modules` | `node-modules` | sib `package.json` |
+| `.npm` | `npm-cache` | child `_cacache`, `_logs`, `_npx` |
+| `.nuxt` | `nuxt-build` | sib* `nuxt.config.js`, `nuxt.config.ts`, `nuxt.config.mjs` and child `dist`, `nitro.json`, `tsconfig.json`, `server` |
+| `.output` | `nuxt-build` | sib* `nuxt.config.js`, `nuxt.config.ts`, `nuxt.config.mjs` and child `dist`, `nitro.json`, `tsconfig.json`, `server` |
+| `.dune` | `ocaml-build` | child `default` |
+| `_dune` | `ocaml-build` | child `default` |
+| `.bloop` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `.dune-cache` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `.merlin` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `.merlin-cache` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `.metals` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `.ocamlformat-cache` | `ocaml-cache` | sib* `dune-project`, `dune-workspace` and child `.json`, `db`, `merlin`, `cache` |
+| `blob-report` | `playwright-report` | sib* `playwright.config.ts`, `playwright.config.js`, `playwright.config.mjs` and child `index.html`, `report.json`, `data` |
+| `playwright-report` | `playwright-report` | sib* `playwright.config.ts`, `playwright.config.js`, `playwright.config.mjs` and child `index.html`, `report.json`, `data` |
+| `.mypy_cache` | `python-tool-cache` | no guard, unique to one tool |
+| `.nox` | `python-tool-cache` | no guard, unique to one tool |
+| `.nyc_output` | `python-tool-cache`, `coverage-report` | `python-tool-cache` — no guard, unique to one tool<br>`coverage-report` — sib* `package.json`, `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `.coveragerc`, `Makefile`, `Cargo.toml` |
+| `.pylint.d` | `python-tool-cache` | no guard, unique to one tool |
+| `.pyre` | `python-tool-cache` | no guard, unique to one tool |
+| `.pyre_cache` | `python-tool-cache` | no guard, unique to one tool |
+| `.pytest_cache` | `python-tool-cache` | no guard, unique to one tool |
+| `.pytype` | `python-tool-cache` | no guard, unique to one tool |
+| `.ruff_cache` | `python-tool-cache` | no guard, unique to one tool |
+| `.tox` | `python-tool-cache` | no guard, unique to one tool |
+| `__pycache__` | `python-tool-cache` | no guard, unique to one tool |
+| `.venv` | `python-venv` | sib* `pyproject.toml`, `requirements.txt`, `setup.py`, `Pipfile` |
+| `venv` | `python-venv` | sib* `pyproject.toml`, `requirements.txt`, `setup.py`, `Pipfile` |
+| `tmp` _(x2)_ | `rails-tmp` | sib* `Gemfile`, `Gemfile.lock`, `config.ru`, `Rakefile`, `config` and child `pids`, `sockets`, `cache`, `storage` |
+| `vendor` _(x2)_ | `ruby-vendor` | sib* `Gemfile`, `Gemfile.lock`, `.ruby-version`, `Rakefile`, `config.ru` and child `bundle`, `cache`, `gems` |
+| `.stack-work` | `stack-work` | sib* `stack.yaml`, `stack.yaml.lock` and child `dist`, `build`, `stack.sqlite` |
+| `.storybook-static` | `storybook-static` | sib `.storybook` |
+| `storybook-static` | `storybook-static` | sib `.storybook` |
+| `.svelte-kit` | `sveltekit-build` | sib* `svelte.config.js`, `svelte.config.ts`, `svelte.config.mjs` and child `output`, `generated` |
+| `.build` _(x2)_ | `swift-build` | sib* `Package.swift` and child `checkouts`, `artifacts`, `debug`, `release`, `manifest.db` |
+| `.terraform` | `terraform-modules` | sib* `main.tf`, `versions.tf`, `terraform.tf`, `.terraform.lock.hcl` and child `modules`, `providers` |
+| `.turbo` | `turbo-cache` | sib `turbo.json` and child `cache` |
+| `DerivedData` _(x2)_ | `xcode-derived-data` | child `Index.noindex`, `ModuleCache.noindex`, `SDKStatCaches.noindex` |
+| `.zig-cache` _(x2)_ | `zig-build` | sib* `build.zig`, `build.zig.zon` |
+| `zig-cache` | `zig-build` | sib* `build.zig`, `build.zig.zon` |
+| `zig-out` | `zig-build` | sib* `build.zig`, `build.zig.zon` |
+
+A name claimed by several policies is matched by whichever guard passes first, which is why `target` needs `Cargo.toml`, `pom.xml` or `build.sbt` next to it rather than a single rule.
+
+### Nested paths, covered by their parent
+
+84 entries are paths rather than names. `mark` recurses on its own and policies match one directory name at a time, so these are not separate policies: if the first segment matches, the parent covers the lot, because `mark` stops descending at a match.
+
+Whether that guard passes depends on where the path is, which is why these are not simply listed as safe. `.gradle/caches` is matched by `gradle-project-cache` inside an Android project and is never matched at `~`, where it holds credentials.
+
+- **19 under ``cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle``** — `build/lib`, `build/bdist`, `build/scripts`, `build/kotlin`, `build/kotlin-classes`, `build/intermediates`, `build/generated`, `build/generated/source`, `build/generated/res`, `build/generated/assets`, `build/tmp`, `build/reports`, `build/test-results`, `build/outputs`, `build/classes`, `build/resources`, `build/libs`, `build/distributions`, `build/publications`
+- **14 under ``cargo-target`, `maven-target`, `sbt-target``** — `target/debug`, `target/release`, `target/doc`, `target/debug/deps`, `target/release/deps`, `target/debug/build`, `target/release/build`, `target/debug/examples`, `target/release/examples`, `target/debug/incremental`, `target/release/incremental`, `target/debug/.fingerprint`, `target/release/.fingerprint`, `target/.rustc_info.json`
+- **9 under no matching policy** — `.yarn/install-state.gz`, `.yarn/patches`, `.yarn/build-state.yml`, `.yarn/sdks`, `.expo/cache`, `.expo/web/cache`, `.remix/cache`, `app/build`, `library/build`
+- **9 under ``cmake-build`, `meson-build`, `elixir-build``** — `_build/default`, `_build/log`, `_build/install`, `_build/default/lib`, `_build/default/bin`, `_build/default/test`, `_build/default/doc`, `_build/default/.merlin`, `_build/default/.db`
+- **7 under ``node-modules``** — `node_modules/.cache`, `node_modules/.vite`, `node_modules/.parcel-cache`, `node_modules/.bin`, `node_modules/.tmp`, `node_modules/.turbo`, `node_modules/.vite-temp`
+- **5 under ``rails-tmp``** — `tmp/cache`, `tmp/pids`, `tmp/sockets`, `tmp/webpack-cache`, `tmp/storage`
+- **4 under ``ruby-vendor``** — `vendor/bundle`, `vendor/cache`, `vendor/bin`, `vendor/composer`
+- **3 under ``npm-cache``** — `.npm/_cacache`, `.npm/_logs`, `.npm/_npx`
+- **3 under ``cocoapods``** — `Pods/Headers`, `Pods/Local Podspecs`, `Pods/Target Support Files`
+- **2 under ``sveltekit-build``** — `.svelte-kit/output`, `.svelte-kit/runtime`
+- **2 under ``js-tool-cache``** — `.astro/content-modules.mjs`, `.vite/deps`
+- **2 under ``ocaml-build``** — `_dune/default`, `_dune/default/.merlin`
+- **2 under ``terraform-modules``** — `.terraform/providers`, `.terraform/modules`
+- **1 under ``next-build``** — `.next/cache`
+- **1 under ``turbo-cache``** — `.turbo/cache`
+- **1 under ``angular-cache``** — `.angular/cache`
+
+## What purgable will not delete
+
+Grouped by why. These are the interesting half of the list.
+
+### Tool home directory
+
+Mixes a cache with credentials, installed tools, or deployment state:
+`~/.cargo` holds your `cargo install`ed binaries, `~/.gradle` can hold
+repository passwords, `~/.pulumi` holds infrastructure state,
+`~/.m2/settings.xml` holds mirror credentials. Clear the cache with the tool
+that owns it instead: `cargo cache`, `uv cache clean`, `go clean -modcache`,
+`docker builder prune`, `bazel clean --expunge`.
+
+`.cargo`, `.cargo-cache`, `.m2`, `.ivy2`, `.sbt` (x2), `.nuget` (x2), `.pub-
+cache`, `.hex`, `.mix`, `.pip`, `.pip-cache`, `.poetry`, `.pyenv`, `.rustup`,
+`.gem`, `.bundle` (x2), `.npm-cache`, `.pnpm-cache`, `.bazel`, `.bazel-cache`
+(x2), `.bazelisk`, `.uv`, `.uv-cache`, `.uv-venv`, `.python-version-cache`,
+`.cargo/registry/cache`, `.cargo/registry/src`, `.cargo/git/checkouts`,
+`.cargo/git/db`, `.cargo/git`, `cargo-cache`, `.cabal-sandbox`, `.hpack`,
+`.ghcup-cache`, `.ghcup`, `.sbt/boot`, `.sbt/launchers`, `.sbt/plugins`,
+`.sbt/1.0`, `.sbt/1.0/plugins`, `.gradle/caches`, `.gradle/daemon`,
+`.gradle/native`, `.gradle/wrapper/dists`, `.gradle/workers`, `.gradle/kotlin`,
+`.gradle/buildOutputCleanup`, `.pants.d`, `.pants-workdir`, `.pants-cache`,
+`.pants-local-cache`, `.rbenv-cache`, `.rvm-cache`, `.terragrunt-cache`,
+`.terraform.d/plugin-cache`, `.terraform.d/plugins`, `.terraform.d/checkpoint`,
+`.aws-sam`, `.serverless`, `.vercel`, `.pulumi`, `.firebase`, `.docker`,
+`.docker-build`, `.docker-cache`
+
+### Too generic to match by name: real source trees and checked-in…
+
+Too generic to match by name: real source trees and checked-in directories use
+this name too. It is matched only through a policy that also requires a build-
+system marker, e.g. `target` needs a `Cargo.toml` sibling.
+
+`builds`, `targets`, `dists`, `outs`, `output` (x2), `outputs` (x3), `bin`
+(x3), `bins`, `objs`, `debug`, `release`, `Debug` (x2), `Release` (x2),
+`artifacts` (x3), `artifact` (x2), `generated`, `intermediate` (x2),
+`intermediates` (x3), `staging`, `temp` (x2), `temps`, `scratch`, `scratchpad`,
+`cache` (x3), `caches`, `test-cache`, `test-caches`, `test-temp`, `test-tmp`,
+`test-work`, `test-workdir`, `test-generated`, `test-generated-files`, `test-
+generated-code`, `test-generated-sources`, `RelWithDebInfo`, `MinSizeRel`,
+`package-cache`, `package-caches`, `compiler-cache` (x2), `compile-cache` (x2),
+`link-cache` (x2), `linker-cache` (x2), `precompiled` (x2), `precompiled-
+headers` (x2), `compiled`, `incremental`, `products`, `product`, `derived`,
+`index`, `indexes`, `language-server-cache`, `lsp-cache`
+
+### Can be the only record of what happened, and is small
+
+Not worth automating: the cost of losing an audit trail is far higher than the
+space reclaimed.
+
+`build-logs` (x2), `coverage`, `coverage-data`, `coverage-cache`, `coverage-
+output`, `coverage-reports`, `coverage-report` (x2), `coverage-results`, `cov`,
+`cov-data`, `cov-cache`, `cov-report`, `cov-reports`, `test-results` (x3),
+`test-result`, `test-output`, `test-outputs`, `test-reports`, `test-report`,
+`test-artifacts`, `test-artifact`, `test-snapshots`, `test-snapshot`, `test-
+recordings`, `test-screenshots`, `test-videos`, `snapshots`, `reports`,
+`report`, `report-cache`, `report-data`, `report-output`, `report-artifacts`,
+`report-generated`, `report-generated-files`, `report-temp`, `report-tmp`,
+`logs`, `log`, `test-logs`, `debug-logs`, `generated-logs`, `TestResults`,
+`profiler-cache`, `profiling-cache`, `trace-cache`, `traces-cache`
+
+### User data
+
+Never something a tool should delete on its own. A `Downloads` directory is the
+clearest example: it holds whatever a browser or CLI happened to save, with no
+record of what still matters.
+
+`screenshots`, `videos`, `recordings`, `captures`, `containers`, `container-
+build`, `container-cache`, `images`, `image-cache`, `layers`, `layer-cache`,
+`registry-cache`, `downloaded`, `downloads`, `downloads-cache`, `thumbnails`,
+`thumbnails-cache`, `preview-cache`, `previews`, `preview-data`, `render-
+cache`, `render-caches`, `rendered`
+
+### Checked-in source, vendored code, or a project root
+
+Deleting these loses work that no rebuild brings back.
+
+`work`, `workdir`, `workspace`, `m4`, `packages` (x2), `dependencies-cache`,
+`deps`, `deps-cache`, `dependencies`, `third-party`, `third_party`, `external`,
+`externals`, `submodules-cache`, `modules-cache`, `module-cache`
+
+### Only ever created inside DerivedData or a SwiftPM `.build`,…
+
+Only ever created inside DerivedData or a SwiftPM `.build`, which `xcode-
+derived-data` and `swift-build` already match. `mark` stops descending at a
+match, so these are covered by the parent.
+
+`Index.noindex` (x2), `ModuleCache.noindex` (x2), `ModuleCache`,
+`PrecompiledHeaders` (x2), `SwiftExplicitPrecompiledModules`,
+`SwiftExplicitPrecompiledModules.noindex`, `SourcePackages/checkouts`,
+`SourcePackages/artifacts`, `SourcePackages/repositories`,
+`SourcePackages/plugins`, `.xcbuild`, `.xcbuilddata`, `xcuserdata`,
+`.xcodeproj/xcuserdata`, `.xcworkspace/xcuserdata`, `dSYM-cache`
+
+### Tool state that holds local device or project state rather than…
+
+Tool state that holds local device or project state rather than rebuildable
+output, or a legacy name no current tool creates.
+
+`.expo`, `.storybook`, `.remix`, `.ember`, `.ember-cli`, `.meson`, `.meson-
+uninstalled`, `nimcache`, `.nimble`, `.crystal`, `.crystal-cache`,
+`.metals/.bloop`, `.metals/.reports`, `.target`, `.vs`
+
+### Only ever created inside a build directory, and the build…
+
+Only ever created inside a build directory, and the build directory itself is
+matched by `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data` or
+`gradle-build`. `mark` stops descending at a match, so these are covered by the
+parent.
+
+`.meson-private`, `.meson-logs` (x2), `CMakeFiles`, `autom4te.cache`, `.libs`,
+`.deps`, `meson-private`, `meson-info`, `meson-logs`, `meson-uninstalled`,
+`.autoconf`, `.autom4te`, `pch`, `PCH`, `compilation-cache`
+
+### Often disposable, but the name is too widely used to delete…
+
+Often disposable, but the name is too widely used to delete blind: `env` and
+`dist-info` turn up in hand-made layouts too. A `.venv` or `venv` **next to a
+`pyproject.toml`** is matched by `python-venv`; a bare `env` is not.
+
+`.egg-info`, `dist-info`, `pip-wheel-metadata`, `pip-wheel-cache`, `pip-build-
+env`, `env`, `ENV`, `virtualenv`, `virtualenvs`
+
+### Test-run artifacts and browser downloads
+
+Deleting means re-downloading the Cypress binary, and screenshots/videos are
+evidence of a failing run.
+
+`.cypress`, `cypress/screenshots`, `cypress/videos`, `cypress/downloads`,
+`playwright/.cache`, `bootstrap/cache`
+
+### Checked-in application assets in the relevant framework, not…
+
+Checked-in application assets in the relevant framework, not build output.
+`public/` holds committed images in Rails and Django apps.
+
+`public`, `site`, `resources/_gen`, `wwwroot`
+
+### Sbt and Mill meta-build output
+
+`project/` also holds the build definition itself, so the directory cannot be
+matched by name.
+
+`project/target`, `project/project`, `project/project/target`, `project/.bloop`
+
+### Rails storage
+
+`sessions/` holds live session data, so clearing it signs everyone out.
+
+`storage/framework/cache`, `storage/framework/sessions` (x2),
+`storage/framework/views`, `storage/framework/testing`
+
+### A project `.yarn` is not all cache
+
+`patches/` and `releases/` are checked-in source, and `releases/` holds the
+Yarn binary itself. Only `cache/` and `unplugged/` are disposable.
+
+`.yarn`, `.yarn/cache`, `.yarn/unplugged`
+
+### Not a directory name any tool creates
+
+Mocha has no cache directory; builds go to `out`, `dist` or `.cache`.
+
+`.build-cache`, `.build-cache-dir`, `.mocha-cache`
+
+### Ambiguous
+
+As often a directory of hand-written or committed generated code as a cache.
+
+`codegen`, `.codegen`, `.codegen-cache`
+
+### Restoring needs `carthage bootstrap` and network access, and…
+
+Restoring needs `carthage bootstrap` and network access, and `Checkouts` is a
+dependency source tree rather than output.
+
+`Carthage/Build`, `Carthage/Checkouts`
+
+### Buck state
+
+Use `buck clean`.
+
+`.buckd`, `.buck-cache`
+
+### Hypothesis keeps an example database of inputs that triggered…
+
+Hypothesis keeps an example database of inputs that triggered past failures. It
+is regenerable, but losing it makes a flaky failure much harder to reproduce.
+
+`.hypothesis`
+
+### The synthesised CloudFormation template and asset staging used…
+
+The synthesised CloudFormation template and asset staging used by `cdk deploy`.
+Regenerable with `cdk synth`, but only from the app source, and it is the
+artefact you deploy.
+
+`cdk.out`
+
+## What purgable cannot match
+
+Not a judgement about safety — a limit of the format or of the traversal.
+
+**A file, not a directory. `mark` only considers directories.** — 34 names
+
+`.pnpm-debug.log`, `.eslintcache`, `.stylelintcache`, `.hugo_build.lock`,
+`.pyc`, `.ghc.environment`, `Package.resolved`, `bazel-workspace`,
+`CMakeCache.txt`, `cmake_install.cmake`, `CPackConfig.cmake`,
+`CPackSourceConfig.cmake`, `install_manifest.txt`, `compile_commands.json`,
+`.ninja_deps`, `.ninja_log`, `.ninja_lock`, `aclocal.m4`, `libtool`,
+`ltmain.sh`, `Makefile`, `Makefile.in`, `config.status`, `config.cache`,
+`config.log`, `config.lt`, `config.h`, `config.h.in`, `packages.config`,
+`TestResults.xml`, `PackageDownload`, `project.assets.json`,
+`project.nuget.cache`, `.dockerignore`
+
+**Glob pattern. Policies match directory names exactly; there is no wildcard support.** — 6 names
+
+`.cache-*`, `.angular/cache/**`, `.ghc.environment.*`, `*.xcuserdatad`,
+`*.xcuserstate`, `*.xccurrentversion`
+
+**Bazel-style convenience symlink. `discovery` never follows symlinks, so it can never be marked. Use `bazel clean --expunge`.** — 4 names
+
+`buck-out`, `bazel-bin`, `bazel-out`, `bazel-testlogs`
+
+**Path to a file, not a directory.** — 1 name
+
+`Pods/Manifest.lock`
+
+## Names with no policy
+
+No build tool in the default set creates a directory with this name, so there is nothing to guard it with. Almost all of these are mechanical `cache-<word>` combinations that look plausible but belong to no tool.
+
+All 592 lack a policy. 591 are `<word>-<suffix>` combinations and 1 is a single word. None is a directory name a tool in the default set creates. The most repeated suffixes:
+
+| suffix | names |
+|--------|------:|
+| `-cache` | 89 |
+| `-files` | 19 |
+| `-artifacts` | 18 |
+| `-build` | 18 |
+| `-output` | 17 |
+| `-data` | 15 |
+| `-caches` | 15 |
+| `-tmp` | 13 |
+| `-temp` | 12 |
+| `-generated` | 11 |
+| `-work` | 11 |
+| `-workdir` | 11 |
+
+Full list in the index below.
+
+## Full index
+
+All 1100 unique names, in the order they appeared in the original list.
+
+```
+MATCH   `cache-dir`                .cache x2
+CANNOT                             .cache-*
+MATCH   `npm-cache`                .npm
+EXCLUDE                            .yarn
+MATCH   `js-tool-cache`            .pnpm-store x2
+MATCH   `js-tool-cache`            .bun
+MATCH   `js-tool-cache`            .bun-cache
+NO-POLICY                          .bun-install-cache
+EXCLUDE                            .cargo
+EXCLUDE                            .cargo-cache
+MATCH   `gradle-project-cache`     .gradle x2
+EXCLUDE                            .m2
+EXCLUDE                            .ivy2
+EXCLUDE                            .sbt x2
+EXCLUDE                            .nuget x2
+EXCLUDE                            .pub-cache
+EXCLUDE                            .hex
+EXCLUDE                            .mix
+EXCLUDE                            .pip
+EXCLUDE                            .pip-cache
+EXCLUDE                            .poetry
+EXCLUDE                            .pyenv
+EXCLUDE                            .rustup
+EXCLUDE                            .gem
+EXCLUDE                            .bundle x2
+EXCLUDE                            .npm-cache
+MATCH   `js-tool-cache`            .yarn-cache
+EXCLUDE                            .pnpm-cache
+EXCLUDE                            .bazel
+EXCLUDE                            .bazel-cache x2
+EXCLUDE                            .bazelisk
+MATCH   `swift-build`              .build x2
+EXCLUDE                            .build-cache
+EXCLUDE                            .build-cache-dir
+MATCH   `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build x2
+EXCLUDE                            builds
+NO-POLICY                          build-debug
+NO-POLICY                          build-release
+NO-POLICY                          build-debug-x86
+NO-POLICY                          build-debug-x64
+NO-POLICY                          build-release-x86
+NO-POLICY                          build-release-x64
+NO-POLICY                          build-output x2
+NO-POLICY                          build-output-debug
+NO-POLICY                          build-output-release
+NO-POLICY                          build-artifacts
+NO-POLICY                          build-artifact
+NO-POLICY                          build-cache x2
+NO-POLICY                          build-cache-dir
+NO-POLICY                          build-cache-data
+NO-POLICY                          build-temp
+NO-POLICY                          build-tmp
+NO-POLICY                          build-test
+NO-POLICY                          build-tests
+NO-POLICY                          build-tools
+NO-POLICY                          build-support
+NO-POLICY                          build-system
+NO-POLICY                          build-files
+NO-POLICY                          build-products
+NO-POLICY                          build-intermediates
+NO-POLICY                          build-intermediate
+NO-POLICY                          build-generated
+NO-POLICY                          build-generated-files
+NO-POLICY                          build-generated-code
+NO-POLICY                          build-generated-sources
+NO-POLICY                          build-generated-assets
+NO-POLICY                          build-staging
+NO-POLICY                          build-stage
+NO-POLICY                          build-work
+NO-POLICY                          build-workdir
+NO-POLICY                          build-workspace
+NO-POLICY                          build-scratch
+NO-POLICY                          build-results
+NO-POLICY                          build-result
+NO-POLICY                          build-reports
+NO-POLICY                          build-report
+EXCLUDE                            build-logs x2
+NO-POLICY                          build-log
+MATCH   `cargo-target`, `maven-target`, `sbt-target` target x2
+EXCLUDE                            targets
+NO-POLICY                          target-debug x2
+NO-POLICY                          target-release x2
+NO-POLICY                          target-build
+NO-POLICY                          target-builds
+NO-POLICY                          target-cache
+NO-POLICY                          target-doc
+NO-POLICY                          target-docs
+NO-POLICY                          target-generated
+NO-POLICY                          target-intermediates
+NO-POLICY                          target-test
+NO-POLICY                          target-tests
+NO-POLICY                          target-artifacts
+NO-POLICY                          target-output
+NO-POLICY                          target-tmp
+NO-POLICY                          target-work
+NO-POLICY                          target-workdir
+NO-POLICY                          target-scratch
+NO-POLICY                          target-coverage
+MATCH   `js-bundle`                dist
+EXCLUDE                            dists
+NO-POLICY                          dist-debug
+NO-POLICY                          dist-release
+NO-POLICY                          dist-build
+NO-POLICY                          dist-cache
+NO-POLICY                          dist-generated
+NO-POLICY                          dist-generated-files
+NO-POLICY                          dist-generated-code
+NO-POLICY                          dist-generated-assets
+NO-POLICY                          dist-artifacts
+NO-POLICY                          dist-output
+NO-POLICY                          dist-staging
+NO-POLICY                          dist-temp
+NO-POLICY                          dist-tmp
+NO-POLICY                          dist-work
+NO-POLICY                          dist-workdir
+NO-POLICY                          dist-scratch
+MATCH   `cmake-build`, `ninja-build`, `meson-build`, `js-bundle` out
+EXCLUDE                            outs
+NO-POLICY                          out-debug
+NO-POLICY                          out-release
+NO-POLICY                          out-build
+NO-POLICY                          out-cache
+NO-POLICY                          out-generated
+NO-POLICY                          out-generated-files
+NO-POLICY                          out-generated-code
+NO-POLICY                          out-generated-sources
+NO-POLICY                          out-generated-assets
+NO-POLICY                          out-artifacts
+NO-POLICY                          out-output
+NO-POLICY                          out-staging
+NO-POLICY                          out-temp
+NO-POLICY                          out-tmp
+NO-POLICY                          out-work
+NO-POLICY                          out-workdir
+NO-POLICY                          out-scratch
+EXCLUDE                            output x2
+EXCLUDE                            outputs x3
+NO-POLICY                          output-cache
+NO-POLICY                          output-generated
+NO-POLICY                          output-artifacts
+NO-POLICY                          output-build
+NO-POLICY                          output-debug
+NO-POLICY                          output-release
+NO-POLICY                          output-temp
+NO-POLICY                          output-tmp
+EXCLUDE                            bin x3
+EXCLUDE                            bins
+NO-POLICY                          bin-debug
+NO-POLICY                          bin-release
+NO-POLICY                          bin-build
+NO-POLICY                          bin-cache
+NO-POLICY                          bin-generated
+NO-POLICY                          bin-artifacts
+NO-POLICY                          bin-output
+NO-POLICY                          bin-temp
+NO-POLICY                          bin-tmp
+MATCH   `dotnet-obj`               obj x3
+EXCLUDE                            objs
+NO-POLICY                          obj-debug
+NO-POLICY                          obj-release
+NO-POLICY                          obj-build
+NO-POLICY                          obj-cache
+NO-POLICY                          obj-generated
+NO-POLICY                          obj-intermediate
+NO-POLICY                          obj-intermediates
+NO-POLICY                          obj-artifacts
+NO-POLICY                          obj-output
+NO-POLICY                          obj-temp
+NO-POLICY                          obj-tmp
+EXCLUDE                            debug
+EXCLUDE                            release
+EXCLUDE                            Debug x2
+EXCLUDE                            Release x2
+EXCLUDE                            artifacts x3
+EXCLUDE                            artifact x2
+NO-POLICY                          artifact-cache x2
+NO-POLICY                          artifact-cache-dir
+NO-POLICY                          artifact-build
+NO-POLICY                          artifact-builds
+NO-POLICY                          artifact-output
+NO-POLICY                          artifact-outputs
+NO-POLICY                          artifact-temp
+NO-POLICY                          artifact-tmp
+EXCLUDE                            generated
+NO-POLICY                          generated-files
+NO-POLICY                          generated-file
+NO-POLICY                          generated-code
+NO-POLICY                          generated-sources
+NO-POLICY                          generated-source
+NO-POLICY                          generated-assets x2
+NO-POLICY                          generated-asset
+NO-POLICY                          generated-data
+NO-POLICY                          generated-data-files
+NO-POLICY                          generated-resources x3
+NO-POLICY                          generated-resource x2
+NO-POLICY                          generated-types
+NO-POLICY                          generated-type
+NO-POLICY                          generated-models
+NO-POLICY                          generated-model
+NO-POLICY                          generated-schema
+NO-POLICY                          generated-schemas
+NO-POLICY                          generated-bindings
+NO-POLICY                          generated-binding
+NO-POLICY                          generated-protobuf
+NO-POLICY                          generated-protos
+NO-POLICY                          generated-docs x2
+NO-POLICY                          generated-doc
+NO-POLICY                          generated-api
+NO-POLICY                          generated-apis
+NO-POLICY                          generated-client
+NO-POLICY                          generated-clients
+NO-POLICY                          generated-server
+NO-POLICY                          generated-servers
+NO-POLICY                          generated-tests x2
+NO-POLICY                          generated-test
+NO-POLICY                          generated-fixtures
+NO-POLICY                          generated-fixture
+NO-POLICY                          generated-mocks
+NO-POLICY                          generated-mock
+NO-POLICY                          generated-stubs
+NO-POLICY                          generated-stub
+NO-POLICY                          generated-cache x3
+NO-POLICY                          generated-cache-data x2
+NO-POLICY                          generated-output x2
+NO-POLICY                          generated-outputs x2
+NO-POLICY                          generated-build x2
+NO-POLICY                          generated-builds x2
+NO-POLICY                          generated-temp x2
+NO-POLICY                          generated-tmp x2
+NO-POLICY                          generated-work x2
+NO-POLICY                          generated-workdir x2
+NO-POLICY                          generated-intermediates x2
+NO-POLICY                          generated-intermediate x2
+NO-POLICY                          generated-artifacts x2
+NO-POLICY                          generated-artifact x2
+NO-POLICY                          generated-reports x2
+NO-POLICY                          generated-report x2
+NO-POLICY                          generated-coverage
+NO-POLICY                          generated-documents
+NO-POLICY                          generated-documentation x2
+EXCLUDE                            intermediate x2
+EXCLUDE                            intermediates x3
+NO-POLICY                          intermediate-build x2
+NO-POLICY                          intermediate-builds x2
+NO-POLICY                          intermediate-files
+NO-POLICY                          intermediate-file
+NO-POLICY                          intermediate-data
+NO-POLICY                          intermediate-output x2
+NO-POLICY                          intermediate-outputs x2
+NO-POLICY                          intermediate-artifacts x2
+NO-POLICY                          intermediate-artifact x2
+NO-POLICY                          intermediate-cache x3
+NO-POLICY                          intermediate-caches x3
+NO-POLICY                          intermediate-generated x2
+NO-POLICY                          intermediate-generated-files x2
+NO-POLICY                          intermediate-generated-code x2
+NO-POLICY                          intermediate-generated-sources x2
+NO-POLICY                          intermediate-generated-assets x2
+EXCLUDE                            staging
+NO-POLICY                          staging-area
+NO-POLICY                          staging-area-cache
+NO-POLICY                          staging-cache
+NO-POLICY                          staging-build
+NO-POLICY                          staging-output
+NO-POLICY                          staging-artifacts
+NO-POLICY                          staging-temp
+NO-POLICY                          staging-tmp
+NO-POLICY                          staging-work
+NO-POLICY                          staging-workdir
+EXCLUDE                            temp x2
+EXCLUDE                            temps
+MATCH   `rails-tmp`                tmp x2
+NO-POLICY                          temp-build
+NO-POLICY                          temp-builds
+NO-POLICY                          temp-cache
+NO-POLICY                          temp-caches
+NO-POLICY                          temp-files
+NO-POLICY                          temp-file
+NO-POLICY                          temp-output
+NO-POLICY                          temp-outputs
+NO-POLICY                          temp-artifacts
+NO-POLICY                          temp-artifact
+NO-POLICY                          temp-generated
+NO-POLICY                          temp-generated-files
+NO-POLICY                          temp-generated-code
+NO-POLICY                          temp-generated-sources
+NO-POLICY                          temp-work
+NO-POLICY                          temp-workdir
+NO-POLICY                          temp-scratch
+NO-POLICY                          tmp-build
+NO-POLICY                          tmp-builds
+NO-POLICY                          tmp-cache
+NO-POLICY                          tmp-caches
+NO-POLICY                          tmp-files
+NO-POLICY                          tmp-output
+NO-POLICY                          tmp-outputs
+NO-POLICY                          tmp-artifacts
+NO-POLICY                          tmp-generated
+NO-POLICY                          tmp-generated-files
+NO-POLICY                          tmp-generated-code
+NO-POLICY                          tmp-generated-sources
+NO-POLICY                          tmp-work
+NO-POLICY                          tmp-workdir
+NO-POLICY                          tmp-scratch
+EXCLUDE                            scratch
+EXCLUDE                            scratchpad
+NO-POLICY                          scratch-build
+NO-POLICY                          scratch-cache
+NO-POLICY                          scratch-files
+NO-POLICY                          scratch-output
+NO-POLICY                          scratch-artifacts
+NO-POLICY                          scratch-work
+NO-POLICY                          scratch-workdir
+EXCLUDE                            work
+EXCLUDE                            workdir
+EXCLUDE                            workspace
+NO-POLICY                          workspace-cache
+NO-POLICY                          workspace-build
+NO-POLICY                          workspace-output
+NO-POLICY                          workspace-temp
+NO-POLICY                          workspace-tmp
+NO-POLICY                          workspace-scratch
+EXCLUDE                            cache x3
+EXCLUDE                            caches
+NO-POLICY                          cache-data x2
+NO-POLICY                          cache-files x2
+NO-POLICY                          cache-build x2
+NO-POLICY                          cache-output x2
+NO-POLICY                          cache-artifacts x2
+NO-POLICY                          cache-generated x2
+NO-POLICY                          cache-generated-files x2
+NO-POLICY                          cache-generated-code x2
+NO-POLICY                          cache-generated-sources x2
+NO-POLICY                          cache-temp x3
+NO-POLICY                          cache-tmp x3
+NO-POLICY                          cache-work x3
+NO-POLICY                          cache-workdir x3
+EXCLUDE                            coverage
+EXCLUDE                            coverage-data
+EXCLUDE                            coverage-cache
+EXCLUDE                            coverage-output
+EXCLUDE                            coverage-reports
+EXCLUDE                            coverage-report x2
+MATCH   `coverage-report`          coverage-html
+MATCH   `coverage-report`          coverage-xml
+MATCH   `coverage-report`          coverage-json
+NO-POLICY                          coverage-artifacts
+EXCLUDE                            coverage-results
+EXCLUDE                            cov
+EXCLUDE                            cov-data
+EXCLUDE                            cov-cache
+EXCLUDE                            cov-report
+EXCLUDE                            cov-reports
+MATCH   `coverage-report`          htmlcov
+MATCH   `coverage-report`          lcov-report
+EXCLUDE                            test-results x3
+EXCLUDE                            test-result
+EXCLUDE                            test-output
+EXCLUDE                            test-outputs
+EXCLUDE                            test-reports
+EXCLUDE                            test-report
+EXCLUDE                            test-artifacts
+EXCLUDE                            test-artifact
+EXCLUDE                            test-cache
+EXCLUDE                            test-caches
+EXCLUDE                            test-temp
+EXCLUDE                            test-tmp
+EXCLUDE                            test-work
+EXCLUDE                            test-workdir
+EXCLUDE                            test-generated
+EXCLUDE                            test-generated-files
+EXCLUDE                            test-generated-code
+EXCLUDE                            test-generated-sources
+EXCLUDE                            test-snapshots
+EXCLUDE                            test-snapshot
+EXCLUDE                            test-recordings
+EXCLUDE                            test-screenshots
+EXCLUDE                            test-videos
+EXCLUDE                            screenshots
+EXCLUDE                            videos
+EXCLUDE                            recordings
+EXCLUDE                            snapshots
+EXCLUDE                            reports
+EXCLUDE                            report
+EXCLUDE                            report-cache
+EXCLUDE                            report-data
+EXCLUDE                            report-output
+EXCLUDE                            report-artifacts
+EXCLUDE                            report-generated
+EXCLUDE                            report-generated-files
+EXCLUDE                            report-temp
+EXCLUDE                            report-tmp
+EXCLUDE                            logs
+EXCLUDE                            log
+EXCLUDE                            test-logs
+EXCLUDE                            debug-logs
+EXCLUDE                            generated-logs
+MATCH   `node-modules`             node_modules
+PATH    via `node-modules`         node_modules/.cache
+PATH    via `node-modules`         node_modules/.vite
+PATH    via `node-modules`         node_modules/.parcel-cache
+PATH    via `node-modules`         node_modules/.bin
+PATH    via `node-modules`         node_modules/.tmp
+PATH    via `node-modules`         node_modules/.turbo
+PATH    via `node-modules`         node_modules/.vite-temp
+MATCH   `js-tool-cache`            .pnpm
+CANNOT                             .pnpm-debug.log
+EXCLUDE                            .yarn/cache
+EXCLUDE                            .yarn/unplugged
+PATH    via none                   .yarn/install-state.gz
+PATH    via none                   .yarn/patches
+PATH    via none                   .yarn/build-state.yml
+PATH    via none                   .yarn/sdks
+PATH    via `npm-cache`            .npm/_cacache
+PATH    via `npm-cache`            .npm/_logs
+PATH    via `npm-cache`            .npm/_npx
+MATCH   `next-build`               .next
+PATH    via `next-build`           .next/cache
+MATCH   `nuxt-build`               .nuxt
+MATCH   `nuxt-build`               .output
+MATCH   `sveltekit-build`          .svelte-kit
+PATH    via `sveltekit-build`      .svelte-kit/output
+PATH    via `sveltekit-build`      .svelte-kit/runtime
+MATCH   `js-tool-cache`            .astro
+PATH    via `js-tool-cache`        .astro/content-modules.mjs
+MATCH   `js-tool-cache`            .parcel-cache
+MATCH   `turbo-cache`              .turbo
+PATH    via `turbo-cache`          .turbo/cache
+MATCH   `js-tool-cache`            .rspack-cache
+MATCH   `js-tool-cache`            .swc
+MATCH   `js-tool-cache`            .babel-cache
+CANNOT                             .eslintcache
+CANNOT                             .stylelintcache
+MATCH   `js-tool-cache`            .cache-loader
+MATCH   `js-tool-cache`            .webpack-cache
+MATCH   `js-tool-cache`            .vite
+MATCH   `js-tool-cache`            .vite-cache
+PATH    via `js-tool-cache`        .vite/deps
+MATCH   `angular-cache`            .angular
+PATH    via `angular-cache`        .angular/cache
+CANNOT                             .angular/cache/**
+EXCLUDE                            .expo
+PATH    via none                   .expo/cache
+PATH    via none                   .expo/web/cache
+EXCLUDE                            .storybook
+MATCH   `storybook-static`         .storybook-static
+MATCH   `storybook-static`         storybook-static
+EXCLUDE                            .remix
+PATH    via none                   .remix/cache
+EXCLUDE                            .ember
+EXCLUDE                            .ember-cli
+MATCH   `js-tool-cache`            .gatsby-cache
+EXCLUDE                            public
+NO-POLICY                          jekyll-cache
+MATCH   `js-tool-cache`            .jekyll-cache
+MATCH   `js-tool-cache`            .sass-cache
+MATCH   `jekyll-site`              _site
+EXCLUDE                            site
+EXCLUDE                            resources/_gen
+CANNOT                             .hugo_build.lock
+EXCLUDE                            .cypress
+EXCLUDE                            cypress/screenshots
+EXCLUDE                            cypress/videos
+EXCLUDE                            cypress/downloads
+MATCH   `playwright-report`        playwright-report
+MATCH   `playwright-report`        blob-report
+EXCLUDE                            playwright/.cache
+MATCH   `python-tool-cache`, `coverage-report` .nyc_output
+MATCH   `coverage-report`          .jest-cache
+NO-POLICY                          jest-cache
+EXCLUDE                            .mocha-cache
+NO-POLICY                          pytest-cache
+MATCH   `python-tool-cache`        .pytest_cache
+MATCH   `python-tool-cache`        .tox
+MATCH   `python-tool-cache`        .nox
+EXCLUDE                            .hypothesis
+MATCH   `python-tool-cache`        .mypy_cache
+MATCH   `python-tool-cache`        .pyre
+MATCH   `python-tool-cache`        .pytype
+MATCH   `python-tool-cache`        .pyre_cache
+MATCH   `python-tool-cache`        .ruff_cache
+MATCH   `python-tool-cache`        .pylint.d
+EXCLUDE                            .meson
+EXCLUDE                            .meson-private
+EXCLUDE                            .meson-logs x2
+EXCLUDE                            .meson-uninstalled
+MATCH   `python-tool-cache`        __pycache__
+NO-POLICY                          __pypackages__
+CANNOT                             .pyc
+EXCLUDE                            .egg-info
+EXCLUDE                            dist-info
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/lib
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/bdist
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/scripts
+EXCLUDE                            pip-wheel-metadata
+EXCLUDE                            pip-wheel-cache
+NO-POLICY                          pip-cache
+EXCLUDE                            pip-build-env
+MATCH   `python-venv`              .venv
+MATCH   `python-venv`              venv
+EXCLUDE                            env
+EXCLUDE                            ENV
+EXCLUDE                            virtualenv
+EXCLUDE                            virtualenvs
+EXCLUDE                            .uv
+EXCLUDE                            .uv-cache
+EXCLUDE                            .uv-venv
+EXCLUDE                            .python-version-cache
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/doc
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug/deps
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release/deps
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug/build
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release/build
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug/examples
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release/examples
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug/incremental
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release/incremental
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/debug/.fingerprint
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/release/.fingerprint
+PATH    via `cargo-target`, `maven-target`, `sbt-target` target/.rustc_info.json
+EXCLUDE                            .cargo/registry/cache
+EXCLUDE                            .cargo/registry/src
+EXCLUDE                            .cargo/git/checkouts
+EXCLUDE                            .cargo/git/db
+EXCLUDE                            .cargo/git
+EXCLUDE                            cargo-cache
+NO-POLICY                          cargo-target
+NO-POLICY                          cargo-build
+MATCH   `zig-build`                zig-cache
+MATCH   `zig-build`                .zig-cache x2
+MATCH   `zig-build`                zig-out
+EXCLUDE                            nimcache
+EXCLUDE                            .nimble
+EXCLUDE                            .crystal
+EXCLUDE                            .crystal-cache
+MATCH   `cmake-build`, `meson-build`, `elixir-build` _build
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/log
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/install
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/lib
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/bin
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/test
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/doc
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/.merlin
+PATH    via `cmake-build`, `meson-build`, `elixir-build` _build/default/.db
+MATCH   `stack-work`               .stack-work
+MATCH   `cabal-dist`               dist-newstyle
+EXCLUDE                            .cabal-sandbox
+EXCLUDE                            .hpack
+CANNOT                             .ghc.environment.* x2
+CANNOT                             .ghc.environment
+EXCLUDE                            .ghcup-cache
+EXCLUDE                            .ghcup
+MATCH   `ocaml-build`              .dune
+MATCH   `ocaml-build`              _dune
+PATH    via `ocaml-build`          _dune/default
+PATH    via `ocaml-build`          _dune/default/.merlin
+MATCH   `ocaml-cache`              .dune-cache
+MATCH   `ocaml-cache`              .merlin
+MATCH   `ocaml-cache`              .ocamlformat-cache
+MATCH   `ocaml-cache`              .merlin-cache
+MATCH   `ocaml-cache`              .bloop
+MATCH   `ocaml-cache`              .metals
+EXCLUDE                            .metals/.bloop
+EXCLUDE                            .metals/.reports
+EXCLUDE                            .target
+EXCLUDE                            project/target
+EXCLUDE                            project/project
+EXCLUDE                            project/project/target
+EXCLUDE                            project/.bloop
+EXCLUDE                            .sbt/boot
+EXCLUDE                            .sbt/launchers
+EXCLUDE                            .sbt/plugins
+EXCLUDE                            .sbt/1.0
+EXCLUDE                            .sbt/1.0/plugins
+EXCLUDE                            .gradle/caches
+EXCLUDE                            .gradle/daemon
+EXCLUDE                            .gradle/native
+EXCLUDE                            .gradle/wrapper/dists
+EXCLUDE                            .gradle/workers
+EXCLUDE                            .gradle/kotlin
+EXCLUDE                            .gradle/buildOutputCleanup
+MATCH   `android-native-build`     .externalNativeBuild
+MATCH   `android-native-build`     .cxx
+EXCLUDE                            captures
+NO-POLICY                          generated-res
+PATH    via none                   app/build
+PATH    via none                   library/build
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/kotlin
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/kotlin-classes
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/intermediates
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/generated
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/generated/source
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/generated/res
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/generated/assets
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/tmp
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/reports
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/test-results
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/outputs
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/classes
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/resources
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/libs
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/distributions
+PATH    via `cmake-build`, `ninja-build`, `meson-build`, `xcode-derived-data`, `gradle-build`, `js-bundle` build/publications
+MATCH   `cocoapods`                Pods
+PATH    via `cocoapods`            Pods/Headers
+PATH    via `cocoapods`            Pods/Local Podspecs
+PATH    via `cocoapods`            Pods/Target Support Files
+CANNOT                             Pods/Manifest.lock
+EXCLUDE                            Carthage/Build
+EXCLUDE                            Carthage/Checkouts
+MATCH   `xcode-derived-data`       DerivedData x2
+EXCLUDE                            Index.noindex x2
+EXCLUDE                            ModuleCache.noindex x2
+EXCLUDE                            ModuleCache
+EXCLUDE                            PrecompiledHeaders x2
+EXCLUDE                            SwiftExplicitPrecompiledModules
+EXCLUDE                            SwiftExplicitPrecompiledModules.noindex
+EXCLUDE                            SourcePackages/checkouts
+EXCLUDE                            SourcePackages/artifacts
+EXCLUDE                            SourcePackages/repositories
+EXCLUDE                            SourcePackages/plugins
+EXCLUDE                            .xcbuild
+EXCLUDE                            .xcbuilddata
+EXCLUDE                            xcuserdata
+CANNOT                             *.xcuserdatad
+CANNOT                             *.xcuserstate
+CANNOT                             *.xccurrentversion
+EXCLUDE                            .xcodeproj/xcuserdata
+EXCLUDE                            .xcworkspace/xcuserdata
+CANNOT                             Package.resolved
+EXCLUDE                            .buckd
+CANNOT                             buck-out
+EXCLUDE                            .buck-cache
+CANNOT                             bazel-bin
+CANNOT                             bazel-out
+CANNOT                             bazel-testlogs
+CANNOT                             bazel-workspace
+NO-POLICY                          bazel-cache
+EXCLUDE                            .pants.d
+EXCLUDE                            .pants-workdir
+EXCLUDE                            .pants-cache
+EXCLUDE                            .pants-local-cache
+EXCLUDE                            CMakeFiles
+MATCH   `cmake-build`              cmake-build-debug
+MATCH   `cmake-build`              cmake-build-release
+MATCH   `cmake-build`              cmake-build-relwithdebinfo
+MATCH   `cmake-build`              cmake-build-minsizerel
+MATCH   `cmake-build`              cmake-build
+CANNOT                             CMakeCache.txt
+CANNOT                             cmake_install.cmake
+CANNOT                             CPackConfig.cmake
+CANNOT                             CPackSourceConfig.cmake
+CANNOT                             install_manifest.txt
+CANNOT                             compile_commands.json
+EXCLUDE                            autom4te.cache
+EXCLUDE                            .libs
+EXCLUDE                            .deps
+CANNOT                             .ninja_deps
+CANNOT                             .ninja_log x2
+CANNOT                             .ninja_lock
+EXCLUDE                            meson-private
+EXCLUDE                            meson-info
+EXCLUDE                            meson-logs
+EXCLUDE                            meson-uninstalled
+EXCLUDE                            .autoconf
+EXCLUDE                            .autom4te
+EXCLUDE                            m4
+CANNOT                             aclocal.m4
+CANNOT                             libtool
+CANNOT                             ltmain.sh
+CANNOT                             Makefile
+CANNOT                             Makefile.in
+CANNOT                             config.status
+CANNOT                             config.cache
+CANNOT                             config.log
+CANNOT                             config.lt
+CANNOT                             config.h
+CANNOT                             config.h.in
+EXCLUDE                            RelWithDebInfo
+EXCLUDE                            MinSizeRel
+EXCLUDE                            packages x2
+CANNOT                             packages.config
+EXCLUDE                            .vs
+EXCLUDE                            TestResults
+CANNOT                             TestResults.xml
+CANNOT                             PackageDownload
+CANNOT                             project.assets.json
+CANNOT                             project.nuget.cache
+EXCLUDE                            wwwroot
+MATCH   `ruby-vendor`              vendor x2
+PATH    via `ruby-vendor`          vendor/bundle
+PATH    via `ruby-vendor`          vendor/cache
+EXCLUDE                            .rbenv-cache
+EXCLUDE                            .rvm-cache
+PATH    via `rails-tmp`            tmp/cache
+PATH    via `rails-tmp`            tmp/pids
+PATH    via `rails-tmp`            tmp/sockets
+PATH    via `rails-tmp`            tmp/webpack-cache
+PATH    via `rails-tmp`            tmp/storage
+EXCLUDE                            bootstrap/cache
+EXCLUDE                            storage/framework/cache
+EXCLUDE                            storage/framework/sessions x2
+EXCLUDE                            storage/framework/views
+EXCLUDE                            storage/framework/testing
+PATH    via `ruby-vendor`          vendor/bin
+PATH    via `ruby-vendor`          vendor/composer
+MATCH   `terraform-modules`        .terraform
+PATH    via `terraform-modules`    .terraform/providers
+PATH    via `terraform-modules`    .terraform/modules
+EXCLUDE                            .terragrunt-cache
+EXCLUDE                            .terraform.d/plugin-cache
+EXCLUDE                            .terraform.d/plugins
+EXCLUDE                            .terraform.d/checkpoint
+EXCLUDE                            cdk.out
+EXCLUDE                            .aws-sam
+EXCLUDE                            .serverless
+EXCLUDE                            .vercel
+EXCLUDE                            .pulumi
+EXCLUDE                            .firebase
+EXCLUDE                            .docker
+EXCLUDE                            .docker-build
+EXCLUDE                            .docker-cache
+NO-POLICY                          docker-build
+NO-POLICY                          docker-cache
+CANNOT                             .dockerignore
+EXCLUDE                            containers
+EXCLUDE                            container-build
+EXCLUDE                            container-cache
+EXCLUDE                            images
+EXCLUDE                            image-cache
+EXCLUDE                            layers
+EXCLUDE                            layer-cache
+EXCLUDE                            registry-cache
+NO-POLICY                          download-cache x2
+EXCLUDE                            downloaded
+EXCLUDE                            downloads
+EXCLUDE                            downloads-cache
+EXCLUDE                            package-cache
+EXCLUDE                            package-caches
+NO-POLICY                          dependency-cache
+EXCLUDE                            dependencies-cache
+EXCLUDE                            deps
+EXCLUDE                            deps-cache
+EXCLUDE                            dependencies
+NO-POLICY                          vendor-cache
+EXCLUDE                            third-party
+EXCLUDE                            third_party
+EXCLUDE                            external
+EXCLUDE                            externals
+EXCLUDE                            submodules-cache
+EXCLUDE                            modules-cache
+EXCLUDE                            module-cache
+NO-POLICY                          module-cache-data
+NO-POLICY                          source-cache x2
+NO-POLICY                          sources-cache
+NO-POLICY                          repository-cache
+NO-POLICY                          repo-cache
+NO-POLICY                          git-cache
+NO-POLICY                          checkout-cache
+NO-POLICY                          checkouts-cache
+NO-POLICY                          worktrees-cache
+NO-POLICY                          index-cache x2
+NO-POLICY                          object-cache
+NO-POLICY                          pack-cache
+NO-POLICY                          archive-cache
+NO-POLICY                          compression-cache
+EXCLUDE                            compiler-cache x2
+EXCLUDE                            compile-cache x2
+EXCLUDE                            link-cache x2
+EXCLUDE                            linker-cache x2
+NO-POLICY                          shader-cache x2
+NO-POLICY                          shaders-cache
+NO-POLICY                          pipeline-cache
+NO-POLICY                          pipelines-cache
+EXCLUDE                            precompiled x2
+NO-POLICY                          precompiled-cache x2
+EXCLUDE                            precompiled-headers x2
+EXCLUDE                            pch
+EXCLUDE                            PCH
+MATCH   `compiler-cache`           ccache
+MATCH   `compiler-cache`           sccache
+MATCH   `compiler-cache`           distcc
+NO-POLICY                          cache-dir
+NO-POLICY                          cache-directory
+NO-POLICY                          cache-objects x2
+NO-POLICY                          cache-content
+NO-POLICY                          cache-content-data
+NO-POLICY                          cache-index x2
+NO-POLICY                          cache-db x2
+NO-POLICY                          cache-state x3
+NO-POLICY                          cache-metadata x2
+NO-POLICY                          cache-manifest
+NO-POLICY                          cache-lock
+NO-POLICY                          cache-locks
+NO-POLICY                          cache-results x2
+NO-POLICY                          cache-reports
+NO-POLICY                          cache-snapshots
+NO-POLICY                          cache-snapshot
+NO-POLICY                          cache-generated-assets
+NO-POLICY                          cache-generated-data
+NO-POLICY                          cache-generated-resources
+NO-POLICY                          cache-generated-types
+NO-POLICY                          cache-generated-models
+NO-POLICY                          cache-generated-schema
+NO-POLICY                          cache-generated-bindings
+NO-POLICY                          cache-generated-protobuf
+NO-POLICY                          cache-generated-protos
+NO-POLICY                          cache-generated-docs
+NO-POLICY                          cache-generated-tests
+NO-POLICY                          cache-generated-fixtures
+NO-POLICY                          cache-generated-mocks
+NO-POLICY                          cache-generated-stubs
+NO-POLICY                          cache-generated-api
+NO-POLICY                          cache-generated-client
+NO-POLICY                          cache-generated-server
+NO-POLICY                          cache-intermediates
+NO-POLICY                          cache-intermediate
+NO-POLICY                          cache-staging
+NO-POLICY                          cache-stage
+NO-POLICY                          cache-workspace x2
+NO-POLICY                          cache-scratch x2
+NO-POLICY                          cache-temp-files
+NO-POLICY                          cache-downloads
+NO-POLICY                          cache-download
+NO-POLICY                          cache-packages x2
+NO-POLICY                          cache-dependencies x2
+NO-POLICY                          cache-modules x2
+NO-POLICY                          cache-sources x2
+NO-POLICY                          cache-repositories x2
+NO-POLICY                          cache-checkouts
+NO-POLICY                          cache-blobs
+NO-POLICY                          cache-chunks
+NO-POLICY                          cache-pages
+NO-POLICY                          cache-indexes
+NO-POLICY                          cache-tables
+NO-POLICY                          cache-tokens
+NO-POLICY                          cache-models
+NO-POLICY                          cache-embeddings
+NO-POLICY                          cache-datasets
+NO-POLICY                          cache-previews
+NO-POLICY                          cache-thumbnails
+NO-POLICY                          cache-render
+NO-POLICY                          cache-rendering
+NO-POLICY                          cache-compiled
+NO-POLICY                          cache-compilation
+NO-POLICY                          cache-link
+NO-POLICY                          cache-linking
+NO-POLICY                          cache-symbols
+NO-POLICY                          cache-debug
+NO-POLICY                          cache-release
+NO-POLICY                          cache-test
+NO-POLICY                          cache-tests
+NO-POLICY                          cache-docs
+NO-POLICY                          cache-documentation
+NO-POLICY                          cache-local
+NO-POLICY                          cache-global
+NO-POLICY                          cache-shared
+NO-POLICY                          cache-project x2
+NO-POLICY                          cache-session x2
+NO-POLICY                          cache-sessions x2
+NO-POLICY                          cache-runtime x2
+NO-POLICY                          cache-runs
+NO-POLICY                          cache-run
+NO-POLICY                          cache-job
+NO-POLICY                          cache-jobs
+NO-POLICY                          cache-task
+NO-POLICY                          cache-tasks
+NO-POLICY                          cache-step
+NO-POLICY                          cache-steps
+NO-POLICY                          cache-result
+NO-POLICY                          cache-manifests
+NO-POLICY                          cache-lockfiles
+NO-POLICY                          cache-lockfile
+NO-POLICY                          cache-database
+NO-POLICY                          cache-store
+NO-POLICY                          cache-storage
+NO-POLICY                          cache-object
+NO-POLICY                          cache-blob
+NO-POLICY                          cache-chunk
+NO-POLICY                          cache-page
+NO-POLICY                          cache-spool
+NO-POLICY                          cache-queue
+NO-POLICY                          cache-buffer
+NO-POLICY                          cache-buffers
+NO-POLICY                          cache-pool
+NO-POLICY                          cache-pools
+NO-POLICY                          cache-worker
+NO-POLICY                          cache-workers
+NO-POLICY                          cache-process
+NO-POLICY                          cache-processes
+NO-POLICY                          cache-daemon
+NO-POLICY                          cache-daemons
+NO-POLICY                          cache-service
+NO-POLICY                          cache-services
+NO-POLICY                          cache-server
+NO-POLICY                          cache-servers
+NO-POLICY                          cache-client
+NO-POLICY                          cache-clients
+NO-POLICY                          cache-runtime-data
+NO-POLICY                          cache-projects
+NO-POLICY                          cache-repo
+NO-POLICY                          cache-repository
+NO-POLICY                          cache-source
+NO-POLICY                          cache-dependency
+NO-POLICY                          cache-package
+NO-POLICY                          cache-module
+NO-POLICY                          cache-library
+NO-POLICY                          cache-libraries
+NO-POLICY                          cache-framework
+NO-POLICY                          cache-frameworks
+NO-POLICY                          cache-toolchain
+NO-POLICY                          cache-toolchains
+NO-POLICY                          cache-sdk
+NO-POLICY                          cache-sdks
+NO-POLICY                          cache-compiler
+NO-POLICY                          cache-compilers
+NO-POLICY                          cache-build-system
+NO-POLICY                          cache-build-systems
+NO-POLICY                          cache-generator
+NO-POLICY                          cache-generators
+NO-POLICY                          cache-codegen
+NO-POLICY                          codegen-cache x2
+EXCLUDE                            codegen
+EXCLUDE                            .codegen
+EXCLUDE                            .codegen-cache
+NO-POLICY                          code-generation
+NO-POLICY                          code-generation-cache
+NO-POLICY                          generated-cache-files
+NO-POLICY                          generated-scratch
+NO-POLICY                          generated-test-results
+NO-POLICY                          generated-index x2
+NO-POLICY                          generated-indices
+NO-POLICY                          generated-indexes x2
+NO-POLICY                          generated-metadata
+NO-POLICY                          generated-manifest
+NO-POLICY                          generated-manifests
+NO-POLICY                          generated-lock
+NO-POLICY                          generated-locks
+NO-POLICY                          generated-asset-bundles
+NO-POLICY                          generated-bundles
+NO-POLICY                          generated-frameworks
+NO-POLICY                          generated-libraries
+NO-POLICY                          generated-libs
+NO-POLICY                          generated-executables
+NO-POLICY                          generated-executable
+NO-POLICY                          generated-binaries
+NO-POLICY                          generated-binary
+NO-POLICY                          generated-symbols
+NO-POLICY                          generated-debug
+NO-POLICY                          generated-release
+NO-POLICY                          generated-profile
+NO-POLICY                          generated-profiles
+NO-POLICY                          generated-profiling
+NO-POLICY                          generated-traces
+NO-POLICY                          generated-trace
+NO-POLICY                          generated-snapshots
+NO-POLICY                          generated-snapshot
+NO-POLICY                          generated-dumps
+NO-POLICY                          generated-dump
+NO-POLICY                          generated-diagnostics
+NO-POLICY                          generated-diagnostic
+NO-POLICY                          generated-analysis
+NO-POLICY                          generated-analyzer
+NO-POLICY                          generated-caches
+NO-POLICY                          intermediate-temp
+NO-POLICY                          intermediate-tmp
+NO-POLICY                          intermediate-work
+NO-POLICY                          intermediate-workdir
+EXCLUDE                            compiled
+NO-POLICY                          compiled-cache
+NO-POLICY                          compiled-files
+NO-POLICY                          compiled-output
+NO-POLICY                          compiled-artifacts
+NO-POLICY                          compiled-binaries
+NO-POLICY                          compiled-libraries
+NO-POLICY                          compiled-modules
+NO-POLICY                          compiled-modules-cache
+NO-POLICY                          compiled-objects
+NO-POLICY                          compiled-objects-cache
+NO-POLICY                          compiled-assets
+NO-POLICY                          compiled-resources
+NO-POLICY                          compiled-sources
+NO-POLICY                          compiled-code
+NO-POLICY                          compiled-code-cache
+NO-POLICY                          compiled-shaders
+NO-POLICY                          compiled-shader-cache
+NO-POLICY                          compiled-templates
+NO-POLICY                          compiled-template-cache
+NO-POLICY                          precompiled-modules
+NO-POLICY                          precompiled-modules-cache
+NO-POLICY                          precompiled-shaders
+NO-POLICY                          precompiled-assets
+EXCLUDE                            compilation-cache
+EXCLUDE                            incremental
+NO-POLICY                          incremental-cache
+NO-POLICY                          incremental-build
+NO-POLICY                          incremental-builds
+NO-POLICY                          incremental-output
+NO-POLICY                          incremental-artifacts
+NO-POLICY                          incremental-data
+NO-POLICY                          incremental-state
+NO-POLICY                          incremental-objects
+NO-POLICY                          incremental-objects-cache
+NO-POLICY                          incremental-compilation
+NO-POLICY                          incremental-compilations
+EXCLUDE                            products
+EXCLUDE                            product
+NO-POLICY                          generated-products
+NO-POLICY                          generated-product
+EXCLUDE                            derived
+NO-POLICY                          derived-data
+NO-POLICY                          derived-data-cache
+NO-POLICY                          derived-sources
+NO-POLICY                          derived-files
+NO-POLICY                          derived-objects
+NO-POLICY                          derived-products
+NO-POLICY                          derived-artifacts
+NO-POLICY                          derived-assets
+NO-POLICY                          derived-resources
+NO-POLICY                          derived-modules
+NO-POLICY                          derived-module
+NO-POLICY                          derived-index
+NO-POLICY                          derived-indexes
+NO-POLICY                          derived-cache
+NO-POLICY                          derived-caches
+EXCLUDE                            index
+EXCLUDE                            indexes
+NO-POLICY                          index-caches
+NO-POLICY                          index-data
+NO-POLICY                          index-store
+NO-POLICY                          index-store-data
+NO-POLICY                          source-caches
+NO-POLICY                          resource-cache
+NO-POLICY                          resource-caches
+NO-POLICY                          asset-cache
+NO-POLICY                          asset-caches
+NO-POLICY                          assetcatalog-cache
+NO-POLICY                          shader-caches
+NO-POLICY                          font-cache
+NO-POLICY                          font-caches
+NO-POLICY                          thumbnail-cache
+EXCLUDE                            thumbnails
+EXCLUDE                            thumbnails-cache
+EXCLUDE                            preview-cache
+EXCLUDE                            previews
+EXCLUDE                            preview-data
+EXCLUDE                            render-cache
+EXCLUDE                            render-caches
+EXCLUDE                            rendered
+NO-POLICY                          render-cache-data
+NO-POLICY                          symbol-cache
+NO-POLICY                          symbols-cache
+NO-POLICY                          debug-cache
+NO-POLICY                          debug-symbols
+EXCLUDE                            dSYM-cache
+NO-POLICY                          dsym-cache
+NO-POLICY                          profile-cache
+NO-POLICY                          profiles-cache
+EXCLUDE                            profiler-cache
+EXCLUDE                            profiling-cache
+EXCLUDE                            trace-cache
+EXCLUDE                            traces-cache
+NO-POLICY                          diagnostic-cache
+NO-POLICY                          diagnostics-cache
+NO-POLICY                          analysis-cache
+NO-POLICY                          analyzer-cache
+EXCLUDE                            language-server-cache
+EXCLUDE                            lsp-cache
+NO-POLICY                          lsp-cache-data
+NO-POLICY                          semantic-cache
+NO-POLICY                          semantic-tokens-cache
+NO-POLICY                          completion-cache
+NO-POLICY                          autocomplete-cache
+NO-POLICY                          code-index
+NO-POLICY                          code-index-cache
+NO-POLICY                          source-index
+NO-POLICY                          source-index-cache
+NO-POLICY                          syntax-cache
+NO-POLICY                          syntax-highlighting-cache
+NO-POLICY                          parser-cache
+NO-POLICY                          parser-caches
+NO-POLICY                          ast-cache
+NO-POLICY                          ast-caches
+NO-POLICY                          type-cache
+NO-POLICY                          type-caches
+NO-POLICY                          metadata-cache
+NO-POLICY                          metadata-caches
+NO-POLICY                          symbol-index
+NO-POLICY                          symbol-index-cache
+NO-POLICY                          dependency-index
+NO-POLICY                          dependency-index-cache
+NO-POLICY                          module-index
+NO-POLICY                          module-index-cache
+NO-POLICY                          workspace-index
+NO-POLICY                          workspace-index-cache
+NO-POLICY                          project-index
+NO-POLICY                          project-index-cache
+```
