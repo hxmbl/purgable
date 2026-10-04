@@ -1,4 +1,4 @@
-# will_delete.txt — what purgable will delete, and what it will not
+# will_delete.md — what purgable will delete, and what it will not
 
 Audit of a 1,237-line list of 1,100 unique directory names, against the 40 policies in the shipped default config.
 
