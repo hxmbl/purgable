@@ -1,15 +1,27 @@
 //! The on-disk `PURGABLE` marker: its name, its format, and how it records
 //! where it came from.
 
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 use crate::size::human_age;
 
 /// The exact, case-sensitive name of the marker file. A directory is purgable
 /// when it directly contains a regular file with this name.
 pub(crate) const TARGET: &str = "PURGABLE";
+
+/// `TARGET` as an `OsStr`, so a directory entry's name can be compared against
+/// the marker name without a lossy conversion per entry.
+///
+/// Built once and cached: `OsStr::new` is not const-callable on stable, and this
+/// comparison sits in the innermost loop of every scan.
+pub(crate) fn target_os() -> &'static OsStr {
+    static TARGET_OS: OnceLock<OsString> = OnceLock::new();
+    TARGET_OS.get_or_init(|| OsString::from(TARGET)).as_os_str()
+}
 
 /// First line of a marker written by this tool, distinguishing it from a
 /// hand-placed empty file.

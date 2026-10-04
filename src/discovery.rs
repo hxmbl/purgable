@@ -1,15 +1,17 @@
 //! Locating what to purge: validating the root, finding marked directories by
 //! marker, and finding policy matches to mark in the first place.
 
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use walkdir::{DirEntry, WalkDir};
+use std::sync::Mutex;
 
 use crate::config::Policy;
-use crate::marker::TARGET;
-use crate::size::dir_size;
+use crate::marker::target_os;
+use crate::parallel;
+use crate::size::seq_dir_size;
 
 /// Confirms that `root` exists and is a directory, returning its metadata.
 pub(crate) fn validate_root(root: &str) -> io::Result<fs::Metadata> {
@@ -30,108 +32,196 @@ pub(crate) fn validate_root(root: &str) -> io::Result<fs::Metadata> {
 /// skipped rather than aborting the scan. The result is sorted and deduplicated
 /// so that a run is deterministic across filesystems.
 pub(crate) fn find(root: &str, warn: &mut impl io::Write) -> io::Result<Vec<PathBuf>> {
-    let mut matches = Vec::new();
-    for entry in WalkDir::new(root).follow_links(false) {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(e) => {
-                let path_str = e
-                    .path()
-                    .map(|p| p.display().to_string())
-                    .unwrap_or_else(|| "<unknown>".to_string());
-                writeln!(warn, "warning: skipping {}: {}", path_str, e)?;
-                continue;
+    let matches: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+    let warnings: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    parallel::walk(
+        &[PathBuf::from(root)],
+        |cursor, _, entries| {
+            for entry in entries.flatten() {
+                let Ok(file_type) = entry.file_type() else {
+                    continue;
+                };
+                let path = entry.path();
+                if file_type.is_dir() {
+                    // Any directory could hold a marker, so keep walking.
+                    cursor.descend(path);
+                } else if file_type.is_file() && path.file_name() == Some(target_os()) {
+                    // The marker names the directory that contains it, so the
+                    // parent of this entry is what the caller wants.
+                    if let Some(parent) = path.parent() {
+                        matches
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .push(parent.to_path_buf());
+                    }
+                }
             }
-        };
-        if is_regular_file(&entry) && entry.file_name() == OsStr::new(TARGET) {
-            matches.push(entry.path().parent().unwrap().to_path_buf());
-        }
+        },
+        |path, e| {
+            warnings
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(format!(
+                    "warning: skipping {}: IO error for operation on {}: {}",
+                    path.display(),
+                    path.display(),
+                    e
+                ));
+        },
+    );
+
+    let mut messages = warnings.into_inner().unwrap_or_else(|e| e.into_inner());
+    // The walk is concurrent, so report in a fixed order rather than in
+    // whatever order the threads happened to finish.
+    messages.sort();
+    for message in messages {
+        writeln!(warn, "{}", message)?;
     }
+
+    let mut matches = matches.into_inner().unwrap_or_else(|e| e.into_inner());
     matches.sort();
     matches.dedup();
     Ok(matches)
 }
 
-/// True when the entry is a regular file, which a symlink never is when
-/// symlinks are not being followed.
-pub(crate) fn is_regular_file(entry: &DirEntry) -> bool {
-    entry.file_type().is_file()
-}
-
 /// A directory that matched a policy, with the size that justified the match.
-pub(crate) struct Candidate {
+pub(crate) struct Candidate<'a> {
     pub(crate) path: PathBuf,
-    pub(crate) policy: String,
+    pub(crate) policy: &'a str,
     pub(crate) size: u64,
 }
 
-/// Test one directory against the policies, returning the first match.
-pub(crate) fn match_policy(
-    dir: &Path,
-    policies: &[&Policy],
-    default_min: Option<u64>,
-) -> Option<Candidate> {
-    let name = dir.file_name()?.to_str()?;
-    for policy in policies {
-        if !policy.is_enabled() || !policy.name_matches(name) {
-            continue;
-        }
-        let parent = dir.parent()?;
-        if !policy.parent_ok(parent) || !policy.child_ok(dir) {
-            continue;
-        }
-        let size = dir_size(dir);
-        if let Some(min) = policy.effective_min(default_min) {
-            if size < min {
-                continue;
+/// The policy set, indexed by directory name.
+///
+/// A scan visits every directory in the tree and each policy may claim several
+/// names, so comparing every policy against every name turns a large tree into
+/// tens of millions of string comparisons. Indexing the names once turns the
+/// same scan into one lookup per directory.
+pub(crate) struct Matcher<'a> {
+    policies: Vec<&'a Policy>,
+    /// Directory name -> indices of the policies that claim it, in file order.
+    by_name: HashMap<&'a str, Vec<u32>>,
+}
+
+impl<'a> Matcher<'a> {
+    pub(crate) fn new(policies: &[&'a Policy]) -> Self {
+        let enabled: Vec<&'a Policy> = policies
+            .iter()
+            .copied()
+            .filter(|p| p.is_enabled())
+            .collect();
+        let mut by_name: HashMap<&'a str, Vec<u32>> = HashMap::new();
+        for (index, policy) in enabled.iter().enumerate() {
+            let index = index as u32;
+            if let Some(name) = policy.dir_name.as_deref() {
+                by_name.entry(name).or_default().push(index);
+            }
+            for name in &policy.dir_name_any {
+                by_name.entry(name.as_str()).or_default().push(index);
             }
         }
-        return Some(Candidate {
-            path: dir.to_path_buf(),
-            policy: policy.name.clone(),
-            size,
-        });
+        for indices in by_name.values_mut() {
+            // First match wins, so the file order of the policies has to be
+            // preserved inside each bucket.
+            indices.sort_unstable();
+        }
+        Matcher {
+            policies: enabled,
+            by_name,
+        }
     }
-    None
+
+    /// Test one directory against the policies, returning the first match.
+    pub(crate) fn match_dir(&self, dir: &Path, default_min: Option<u64>) -> Option<Candidate<'a>> {
+        let name = dir.file_name()?.to_str()?;
+        let candidates = self.by_name.get(name)?;
+        let parent = dir.parent()?;
+        // Measured at most once: every policy is looking at the same bytes.
+        let mut measured: Option<u64> = None;
+        for index in candidates {
+            let policy = &self.policies[*index as usize];
+            if !policy.parent_ok(parent) || !policy.child_ok(dir) {
+                continue;
+            }
+            let size = match measured {
+                Some(size) => size,
+                None => *measured.insert(seq_dir_size(dir)),
+            };
+            if let Some(min) = policy.effective_min(default_min) {
+                if size < min {
+                    continue;
+                }
+            }
+            return Some(Candidate {
+                path: dir.to_path_buf(),
+                policy: policy.name.as_str(),
+                size,
+            });
+        }
+        None
+    }
 }
 
 /// Walk `dir` collecting policy matches. Matched directories are not descended
 /// into, so a build tree never yields nested candidates.
-pub(crate) fn scan_for_policies(
+pub(crate) fn scan_for_policies<'a>(
     dir: &Path,
-    policies: &[&Policy],
+    matcher: &Matcher<'a>,
     default_min: Option<u64>,
-    found: &mut Vec<Candidate>,
+    found: &mut Vec<Candidate<'a>>,
     warn: &mut impl io::Write,
 ) {
-    let entries = match fs::read_dir(dir) {
-        Ok(entries) => entries,
-        Err(e) => {
-            let _ = writeln!(warn, "warning: cannot read {}: {}", dir.display(), e);
-            return;
-        }
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        // file_type() does not traverse symlinks, so this rejects them here.
-        let Ok(file_type) = entry.file_type() else {
-            continue;
-        };
-        if file_type.is_symlink() || !file_type.is_dir() {
-            continue;
-        }
-        let Some(name) = path.file_name().and_then(OsStr::to_str) else {
-            continue;
-        };
-        if name == ".git" {
-            continue;
-        }
-        if let Some(candidate) = match_policy(&path, policies, default_min) {
-            found.push(candidate);
-            continue;
-        }
-        scan_for_policies(&path, policies, default_min, found, warn);
+    let matches: Mutex<Vec<Candidate<'a>>> = Mutex::new(Vec::new());
+    let warnings: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    parallel::walk(
+        &[dir.to_path_buf()],
+        |cursor, _, entries| {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                // file_type() does not traverse symlinks, so this rejects them here.
+                let Ok(file_type) = entry.file_type() else {
+                    continue;
+                };
+                if file_type.is_symlink() || !file_type.is_dir() {
+                    continue;
+                }
+                let Some(name) = path.file_name().and_then(OsStr::to_str) else {
+                    continue;
+                };
+                if name == ".git" {
+                    continue;
+                }
+                match matcher.match_dir(&path, default_min) {
+                    Some(candidate) => {
+                        matches
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .push(candidate);
+                    }
+                    // Only descend when the directory is not itself a match.
+                    None => cursor.descend(path),
+                }
+            }
+        },
+        |path, e| {
+            // This warning predates the parallel walker and came from a bare
+            // fs::read_dir, so it quotes the errno on its own.
+            warnings
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(format!("warning: cannot read {}: {}", path.display(), e));
+        },
+    );
+
+    let mut messages = warnings.into_inner().unwrap_or_else(|e| e.into_inner());
+    messages.sort();
+    for message in messages {
+        let _ = writeln!(warn, "{}", message);
     }
+
+    found.extend(matches.into_inner().unwrap_or_else(|e| e.into_inner()));
 }
 
 #[cfg(test)]
@@ -179,6 +269,32 @@ mod tests {
         let matches = find(dir.path().to_str().unwrap(), &mut io::stderr()).unwrap();
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0], sub);
+    }
+
+    #[test]
+    fn test_find_normalises_a_trailing_slash_root() {
+        let dir = tempfile::tempdir().unwrap();
+        write_dir_with_content(dir.path(), &[("PURGABLE", "")]);
+        let root = format!("{}/", dir.path().display());
+
+        let matches = find(&root, &mut io::stderr()).unwrap();
+        assert_eq!(matches, vec![dir.path().to_path_buf()]);
+    }
+
+    #[test]
+    fn test_find_discovers_nested_markers_inside_marked_directories() {
+        // A marked directory may itself contain marked directories; both are
+        // reported, which is what `list` and `unmark` need.
+        let dir = tempfile::tempdir().unwrap();
+        write_dir_with_content(
+            dir.path(),
+            &[("outer/PURGABLE", ""), ("outer/inner/PURGABLE", "")],
+        );
+
+        let matches = find(dir.path().to_str().unwrap(), &mut io::stderr()).unwrap();
+        assert_eq!(matches.len(), 2);
+        assert!(matches.contains(&dir.path().join("outer")));
+        assert!(matches.contains(&dir.path().join("outer/inner")));
     }
 
     #[test]

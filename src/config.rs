@@ -65,15 +65,6 @@ impl Policy {
         self.enabled.unwrap_or(true)
     }
 
-    pub(crate) fn name_matches(&self, name: &str) -> bool {
-        if let Some(exact) = &self.dir_name {
-            if exact == name {
-                return true;
-            }
-        }
-        self.dir_name_any.iter().any(|candidate| candidate == name)
-    }
-
     pub(crate) fn parent_ok(&self, parent: &Path) -> bool {
         for required in &self.require_sibling {
             if !parent.join(required).exists() {
@@ -739,7 +730,7 @@ mod tests {
         let mut found = Vec::new();
         crate::discovery::scan_for_policies(
             Path::new(root),
-            &selected,
+            &crate::discovery::Matcher::new(&selected),
             None,
             &mut found,
             &mut Vec::new(),
@@ -834,7 +825,7 @@ mod tests {
         let mut found = Vec::new();
         crate::discovery::scan_for_policies(
             Path::new(root),
-            &selected,
+            &crate::discovery::Matcher::new(&selected),
             None,
             &mut found,
             &mut Vec::new(),

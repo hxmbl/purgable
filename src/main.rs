@@ -6,9 +6,11 @@
 mod action;
 mod cli;
 mod config;
+mod dirfd;
 mod discovery;
 mod mark;
 mod marker;
+mod parallel;
 mod prompt;
 mod purge;
 mod shred;

@@ -1,8 +1,10 @@
 //! Terminal presentation primitives: ANSI styling, width measurement, and the
 //! path shortening that keeps listings on one line.
 
+use std::borrow::Cow;
 use std::io::IsTerminal;
 use std::path::Path;
+use std::sync::OnceLock;
 
 /// ANSI styling, disabled wholesale when output is not a terminal.
 pub(crate) struct Style {
@@ -110,21 +112,41 @@ pub(crate) fn truncate_head(text: &str, max: usize) -> String {
     format!("...{}", tail)
 }
 
+/// The user's home directory, read once.
+///
+/// `display_path` runs once per row of a listing, and `getenv` is a lock plus a
+/// linear scan of `environ` on every call. The value cannot change during a run.
+fn home() -> Option<&'static str> {
+    static HOME: OnceLock<Option<String>> = OnceLock::new();
+    HOME.get_or_init(|| {
+        let home = std::env::var_os("HOME")?;
+        let home = home.to_string_lossy().into_owned();
+        (!home.is_empty()).then_some(home)
+    })
+    .as_deref()
+}
+
 /// Replace the home directory prefix with `~` so paths fit on one line.
-pub(crate) fn display_path(path: &Path) -> String {
-    let text = path.display().to_string();
-    if let Some(home) = std::env::var_os("HOME") {
-        let home = home.to_string_lossy().to_string();
-        if !home.is_empty() {
-            if text == home {
-                return "~".to_string();
-            }
-            if let Some(rest) = text.strip_prefix(&format!("{}/", home)) {
-                return format!("~/{}", rest);
-            }
-        }
+///
+/// Borrows the path when there is nothing to rewrite, so a path outside `~`
+/// costs no allocation at all.
+pub(crate) fn display_path(path: &Path) -> Cow<'_, str> {
+    // to_string_lossy borrows for valid UTF-8, which is the overwhelmingly
+    // common case, and allocates only for a path that is not.
+    let text = path.to_string_lossy();
+    let Some(home) = home() else {
+        return text;
+    };
+    if text == home {
+        return Cow::Borrowed("~");
     }
-    text
+    match text
+        .strip_prefix(home)
+        .and_then(|rest| rest.strip_prefix('/'))
+    {
+        Some(rest) => Cow::Owned(format!("~/{}", rest)),
+        None => text,
+    }
 }
 
 /// One action in the prompt legend.

@@ -12,7 +12,15 @@ libc = "0.2"
 rand = "0.10"
 serde = { version = "1", features = ["derive"] }
 toml = "0.9"
-walkdir = "2"
 
 [dev-dependencies]
 tempfile = "3"
+
+# Every hot path here is syscall-bound, so the release profile is tuned for
+# throughput rather than for fast rebuilds.
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

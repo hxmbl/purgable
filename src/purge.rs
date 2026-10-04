@@ -8,8 +8,8 @@ use crate::action::{Action, Opts};
 use crate::discovery::{find, validate_root};
 use crate::marker::read_marker;
 use crate::prompt::{prompt, write_row, Row, RowState};
-use crate::shred::{clear_dir, remove_dir, shred_dir};
-use crate::size::{dir_size, human_size, now_secs};
+use crate::shred::{clear_dir, remove_dir, shred_and_remove_dir, shred_dir};
+use crate::size::{dir_sizes, human_size, now_secs};
 use crate::style::{display_path, term_width, truncate_head, Style};
 
 /// Tally of what a review run did, reported in the closing summary.
@@ -46,12 +46,17 @@ pub(crate) fn purge(
 
     // Largest first: when space is the reason you are here, the decision that
     // matters is the big one, and it should not be buried mid-list.
+    //
+    // Every match is measured in one pass before the first prompt appears: the
+    // rows have to be in size order to be displayed, so deferring the cost only
+    // makes the user wait longer for the same answer.
+    let sizes = dir_sizes(&matches);
     let mut rows: Vec<(u64, PathBuf, String)> = matches
-        .into_iter()
-        .map(|dir| {
-            let size = dir_size(&dir);
-            let provenance = read_marker(&dir).describe(now);
-            (size, dir, provenance)
+        .iter()
+        .zip(sizes)
+        .map(|(dir, size)| {
+            let provenance = read_marker(dir).describe(now);
+            (size, dir.clone(), provenance)
         })
         .collect();
     rows.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
@@ -71,6 +76,9 @@ pub(crate) fn purge(
     }
 
     let style = Style::detect();
+    // The window does not resize while a prompt is up, and this is read once
+    // per row rather than once per run.
+    let width = term_width();
     let total: u64 = rows
         .iter()
         .map(|r| r.0)
@@ -140,10 +148,7 @@ pub(crate) fn purge(
                 out,
                 "  {} {}  {}",
                 style.dim(&format!("[{:>2}/{:<2}]", index, count)),
-                style.dim(&truncate_head(
-                    &display_path(dir),
-                    term_width().saturating_sub(24)
-                )),
+                style.dim(&truncate_head(&display_path(dir), width.saturating_sub(24))),
                 if word.is_empty() {
                     String::new()
                 } else {
@@ -181,7 +186,7 @@ pub(crate) fn purge(
             Action::DeleteAll => remove_dir(dir),
             Action::ClearContents => clear_dir(dir),
             Action::ShredContents => shred_dir(dir),
-            Action::ShredAll => shred_dir(dir).and_then(|()| remove_dir(dir)),
+            Action::ShredAll => shred_and_remove_dir(dir),
             Action::Skip => {
                 stats.skipped += 1;
                 write_row(
@@ -240,10 +245,7 @@ pub(crate) fn purge(
                     "  {} {:>7}  {}  {}",
                     style.dim(&format!("[{:>2}/{:<2}]", index, count)),
                     style.yellow("failed"),
-                    style.dim(&truncate_head(
-                        &display_path(dir),
-                        term_width().saturating_sub(24)
-                    )),
+                    style.dim(&truncate_head(&display_path(dir), width.saturating_sub(24))),
                     style.red(&e.to_string())
                 )?;
                 stats.skipped += 1;

@@ -7,10 +7,10 @@ use std::path::{Path, PathBuf};
 
 use crate::action::Opts;
 use crate::config::{config_path, Config, Policy};
-use crate::discovery::{find, scan_for_policies, validate_root};
+use crate::discovery::{find, scan_for_policies, validate_root, Matcher};
 use crate::marker::{marker_path, read_marker, write_marker};
 use crate::prompt::{write_row, Row, RowState};
-use crate::size::{dir_size, human_size, now_secs, parse_size};
+use crate::size::{dir_sizes, human_size, now_secs, parse_size};
 use crate::style::{display_path, term_width, truncate_head, Style};
 
 /// Tally of what a `mark` run did.
@@ -74,7 +74,13 @@ pub(crate) fn mark(
     }
 
     let mut found = Vec::new();
-    scan_for_policies(Path::new(root), &selected, default_min, &mut found, warn);
+    scan_for_policies(
+        Path::new(root),
+        &Matcher::new(&selected),
+        default_min,
+        &mut found,
+        warn,
+    );
     found.sort_by(|a, b| b.size.cmp(&a.size).then_with(|| a.path.cmp(&b.path)));
 
     let mut stats = MarkStats {
@@ -123,7 +129,7 @@ pub(crate) fn mark(
         let counter = style.dim(&format!("[{:>2}/{:<2}]", index + 1, found.len()));
         let size_text = style.cyan(&human_size(candidate.size));
         let path = truncate_head(&display_path(&candidate.path), width.saturating_sub(46));
-        let policy = style.magenta(&truncate_head(&candidate.policy, 16));
+        let policy = style.magenta(&truncate_head(candidate.policy, 16));
 
         let (action_text, path_text) = if marker_path(&candidate.path).exists() {
             stats.already += 1;
@@ -131,7 +137,7 @@ pub(crate) fn mark(
         } else if opts.dry_run {
             (style.yellow("would mark"), style.dim(&path))
         } else {
-            write_marker(&candidate.path, &candidate.policy, candidate.size, now)?;
+            write_marker(&candidate.path, candidate.policy, candidate.size, now)?;
             stats.marked += 1;
             (style.green("marked"), style.dim(&path))
         };
@@ -310,12 +316,19 @@ pub(crate) fn list(
     }
 
     let now = now_secs();
-    let mut rows: Vec<(u64, PathBuf, String)> = Vec::new();
+    // One pass over every marked tree, not one walk per directory.
+    let sizes = dir_sizes(&marked);
+    let mut rows: Vec<(u64, PathBuf, String)> = marked
+        .iter()
+        .zip(sizes)
+        .map(|(dir, size)| {
+            let provenance = read_marker(dir).describe(now);
+            (size, dir.clone(), provenance)
+        })
+        .collect();
     let mut total = 0u64;
-    for dir in &marked {
-        let size = dir_size(dir);
-        total = total.saturating_add(size);
-        rows.push((size, dir.clone(), read_marker(dir).describe(now)));
+    for (size, _, _) in &rows {
+        total = total.saturating_add(*size);
     }
     rows.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
 
