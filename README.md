@@ -287,4 +287,4 @@ removed only as a consequence of its directory being removed, or by `unmark`.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
