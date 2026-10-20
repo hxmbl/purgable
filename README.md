@@ -10,7 +10,7 @@ It only finds what it can prove is disposable. Every policy needs a build-system
 file next to the directory, or a file only that tool writes inside it, before it
 will match — which is how it tells Cargo's `target` apart from
 `linux/kernel/drivers/target`, both real directories with the same name.
-[`will_delete.txt`](will_delete.txt) is the full audit of what that rules out and
+[`will_delete.md`](will_delete.md) is the full audit of what that rules out and
 what it allows.
 
 ## Install
@@ -53,8 +53,8 @@ purgable --version | -v
 
 ### What it will delete
 
-The starter config ships with 40 policies, and
-[`will_delete.txt`](will_delete.txt) is the full audit: every directory name a
+The starter config ships with 46 policies, and
+[`will_delete.md`](will_delete.md) is the full audit: every directory name a
 1,237-line list of candidates proposed, with a verdict for each one and the guard
 that justifies it. Of 1,100 unique names, **86 can be marked and 930 cannot**:
 
@@ -65,6 +65,10 @@ that justifies it. Of 1,100 unique names, **86 can be marked and 930 cannot**:
 | EXCLUDED | 293 | deliberately never matched, reason given |
 | CANNOT-MATCH | 45 | a file, a glob, or a symlink the traversal cannot mark |
 | NO POLICY | 592 | no tool in the default set creates this name |
+
+Six policies also match names that list never contained — Dart, Elm, Clojure,
+Go, Jupyter and Xcode device support — documented in
+[`will_delete.md`](will_delete.md).
 
 So the short answer: purgable deletes build output, dependency trees, and caches,
 and it will not touch your downloads, your logs, your vendored source, or any
@@ -177,7 +181,7 @@ beyond the delete. **Use `d` to reclaim space; use `s` or `x` for secrets.**
 
 Policies live in `~/.config/purgable.toml` (override the path with
 `$PURGABLE_CONFIG`). Run `purgable init` to write a starter file, which ships
-with 40 policies covering the common ecosystems.
+with 46 policies covering the common ecosystems.
 
 ```toml
 [defaults]

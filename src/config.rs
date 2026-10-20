@@ -178,6 +178,15 @@ dir_name = "target"
 require_sibling_any = ["build.sbt", "project.clj", "deps.edn"]
 require_child_any = ["classes", "test-classes", "streams", "resolution-cache"]
 
+# Clojure CLI cached classpaths. Every clojure command recomputes and
+# rewrites them, so deleting one costs only the recomputation. The build-tool
+# sibling keeps a directory called .cpcache in a non-Clojure project out of
+# the results.
+[[policy]]
+name = "clojure-cpcache"
+dir_name = ".cpcache"
+require_sibling_any = ["deps.edn", "project.clj", "build.boot"]
+
 # CMake out-of-source builds. CMakeCache.txt is written by nothing else, so
 # this guard is decisive on its own. That is what keeps a source directory
 # named `build` (linux/kernel/tools/build) out of the results.
@@ -208,6 +217,16 @@ name = "xcode-derived-data"
 dir_name_any = ["DerivedData", "build"]
 require_child_any = ["Index.noindex", "ModuleCache.noindex", "SDKStatCaches.noindex"]
 
+# Xcode's copied symbols for a physical iOS device. Pulled from the device
+# the first time it is attached and pulled again on demand, so deleting one
+# only costs a re-copy the next time that device is used. UserData is created
+# by Xcode in every install, which is what tells this apart from any other
+# directory a user may have named `iOS DeviceSupport` elsewhere.
+[[policy]]
+name = "xcode-device-support"
+dir_name = "iOS DeviceSupport"
+require_sibling_any = ["UserData", "DerivedData", "Archives"]
+
 # Gradle, Android and Flutter output. A build.gradle sibling plus Gradle's own
 # output directories; Flutter's `build` has the same shape.
 [[policy]]
@@ -223,6 +242,14 @@ name = "gradle-project-cache"
 dir_name = ".gradle"
 require_sibling_any = ["build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradlew"]
 require_child_any = ["caches", "buildOutputCleanup", "daemon", "native", "wrapper"]
+
+# Dart and Flutter build state: the resolved package configuration that
+# `dart pub get` / `flutter pub get` writes before every build.
+[[policy]]
+name = "dart-pub-build"
+dir_name = ".dart_tool"
+require_sibling_any = ["pubspec.yaml", "pubspec.lock"]
+require_child_any = ["package_config.json", "flutter_build"]
 
 # Swift Package Manager checkout and build products, regenerable with
 # `swift build`.
@@ -252,6 +279,14 @@ name = "cabal-dist"
 dir_name = "dist-newstyle"
 require_sibling_any = ["cabal.project", "cabal.project.local", "stack.yaml", "package.yaml"]
 require_child_any = ["build", "packagedb", "cache"]
+
+# Elm dependencies, regenerable with `elm make`. The elm.json sibling is the
+# guard; `elm-stuff` itself is claimed by no other tool, but the sibling makes
+# the intent explicit anyway.
+[[policy]]
+name = "elm-stuff"
+dir_name = "elm-stuff"
+require_sibling = ["elm.json"]
 
 # Zig build and cache directories. build.zig is present in every Zig project.
 [[policy]]
@@ -320,6 +355,16 @@ require_child_any = ["index.html", "index.js", "main.js", "assets", ".vite"]
 name = "node-modules"
 dir_name = "node_modules"
 require_sibling = ["package.json"]
+
+# Go's module cache at its default GOPATH location, regenerable with
+# `go mod download`. `mod` alone is far too generic, so this requires Go's
+# checksum database cache (`sumdb` on modern Go, `sum` on older) as a
+# sibling and the module store itself as a child.
+[[policy]]
+name = "go-module-cache"
+dir_name = "mod"
+require_sibling_any = ["sumdb", "sum"]
+require_child_any = ["cache", "download", "github.com", "golang.org"]
 
 # Python virtualenvs, regenerable with `python -m venv`. A directory called
 # `env` is left alone on purpose: it is too common a name to mean venv.
@@ -454,6 +499,14 @@ require_child_any = ["_cacache", "_logs", "_npx"]
 [[policy]]
 name = "python-tool-cache"
 dir_name_any = ["__pycache__", ".pytest_cache", ".mypy_cache", ".pyre_cache", ".pyre", ".pytype", ".pylint.d", ".ruff_cache", ".tox", ".nox", ".nyc_output"]
+
+# Jupyter's autosaved copies of open notebooks. Each checkpoint is a copy of
+# a notebook as of its last save, kept only so a botched edit can be rolled
+# back; the notebooks themselves live outside this directory and are never
+# matched from here. Dot-directory convention, so no guard.
+[[policy]]
+name = "jupyter-checkpoints"
+dir_name = ".ipynb_checkpoints"
 
 # Coverage and test reports. These are small and rarely reach the size
 # threshold, but the guard keeps the names from matching a directory that
@@ -798,6 +851,16 @@ mod tests {
             ("npm/.npm", "_cacache", &[]),
             ("home/.cache", "", &[]),
             ("python/pkg/__pycache__", "", &[]),
+            ("jupyter/.ipynb_checkpoints", "", &[]),
+            ("dart/.dart_tool", "package_config.json", &["pubspec.yaml"]),
+            ("clojure/.cpcache", "deps", &["deps.edn"]),
+            ("elm/elm-stuff", "elm-stuff", &["elm.json"]),
+            ("go/pkg/mod", "cache", &["sumdb"]),
+            (
+                "xcode/ios-device-support/iOS DeviceSupport",
+                "Symbols",
+                &["UserData"],
+            ),
             ("jekyll/_site", "index.html", &["_config.yml"]),
             ("tools/ccache", "stats", &[]),
             ("rails/tmp", "pids", &["Gemfile"]),

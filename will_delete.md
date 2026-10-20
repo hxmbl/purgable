@@ -1,6 +1,6 @@
 # will_delete.md — what purgable will delete, and what it will not
 
-Audit of a 1,237-line list of 1,100 unique directory names, against the 40 policies in the shipped default config.
+Audit of a 1,237-line list of 1,100 unique directory names, against the 46 policies in the shipped default config.
 
 Every name is given a verdict, derived from the policies in `src/config.rs` rather than by hand. If you add a policy, this file needs a new line to match it. The original list is recoverable by stripping the verdict column from the index at the end.
 
@@ -24,7 +24,9 @@ purgable review ~             # only now can anything be deleted
 | **NO POLICY** | 592 | 679 | no tool in the default set creates this name |
 | **total** | 1100 | 1237 | |
 
-**86 of 1100 names can be marked — 40 policies.** A further 84 are nested paths that come along when their parent matches. The other 930 cannot, which is the point: the list was mostly a list of things that should never have been in it.
+**86 of 1100 names can be marked — 40 of the 46 shipped policies.** A further 84 are nested paths that come along when their parent matches. The other 930 cannot, which is the point: the list was mostly a list of things that should never have been in it.
+
+Six policies were added after this list was compiled, and match six names that are not in it, so they appear in no tally below: `clojure-cpcache` (`.cpcache`), `dart-pub-build` (`.dart_tool`), `elm-stuff` (`elm-stuff`), `go-module-cache` (`mod` next to Go's checksum cache), `jupyter-checkpoints` (`.ipynb_checkpoints`) and `xcode-device-support` (`iOS DeviceSupport`). They are documented in [the section below](#names-matched-by-policies-added-after-the-audit).
 
 ## What purgable will delete
 
@@ -122,6 +124,21 @@ The exceptions are marked *no guard* below: `.cache`, `.pytest_cache`, `.vite` a
 | `zig-out` | `zig-build` | sib* `build.zig`, `build.zig.zon` |
 
 A name claimed by several policies is matched by whichever guard passes first, which is why `target` needs `Cargo.toml`, `pom.xml` or `build.sbt` next to it rather than a single rule.
+
+### Names matched by policies added after the audit
+
+The same verdict rules as the table above, for the six names the 1,100-name list never contained.
+
+| name | matched by | guard that makes it safe |
+|------|-----------|---------------------------|
+| `.cpcache` | `clojure-cpcache` | sib* `deps.edn`, `project.clj`, `build.boot` |
+| `.dart_tool` | `dart-pub-build` | sib* `pubspec.yaml`, `pubspec.lock` and child `package_config.json`, `flutter_build` |
+| `elm-stuff` | `elm-stuff` | sib `elm.json` |
+| `mod` | `go-module-cache` | sib* `sumdb`, `sum` and child `cache`, `download`, `github.com`, `golang.org` |
+| `.ipynb_checkpoints` | `jupyter-checkpoints` | no guard, unique to one tool |
+| `iOS DeviceSupport` | `xcode-device-support` | sib* `UserData`, `DerivedData`, `Archives` |
+
+`mod` is the one worth a second look: a directory called `mod` appears in all sorts of trees, so this policy only fires where Go's checksum database cache (`sumdb` on modern Go, `sum` on older) sits beside it and the module store sits inside it. That pair is written by `go` and by nothing else.
 
 ### Nested paths, covered by their parent
 
