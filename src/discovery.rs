@@ -88,6 +88,85 @@ pub(crate) fn find(root: &str, warn: &mut impl io::Write) -> io::Result<Vec<Path
     Ok(matches)
 }
 
+/// Find marker paths and build subtree filter.
+///
+/// Returns all marker paths plus a filter predicate that returns true for paths
+/// that should still be measured (not subdirectories of any marker path). This
+/// avoids calling dir_sizes on subtrees already measured as part of ancestor
+/// marker paths, reducing traversal work when markers nest.
+type SubtreeFilter = Box<dyn Fn(&Path) -> bool>;
+
+#[allow(dead_code)]
+pub(crate) fn find_with_subtree_filter(
+    root: &str,
+    warn: &mut impl io::Write,
+) -> io::Result<(Vec<PathBuf>, SubtreeFilter)> {
+    if std::env::var("PURGABLE_SKIP_SUBTREE_FILTER").is_ok() {
+        let matches = find(root, warn)?;
+        return Ok((matches, Box::new(move |_path: &Path| -> bool { false })));
+    }
+
+    let matches: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+    let warnings: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    parallel::walk(
+        &[PathBuf::from(root)],
+        |cursor, _, entries| {
+            for entry in entries.flatten() {
+                let Ok(file_type) = entry.file_type() else {
+                    continue;
+                };
+                if file_type.is_dir() {
+                    cursor.descend(entry.path());
+                } else if file_type.is_file() && entry.file_name() == target_os() {
+                    let path = entry.path();
+                    if let Some(parent) = path.parent() {
+                        matches
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .push(parent.to_path_buf());
+                    }
+                }
+            }
+        },
+        |path, e| {
+            warnings
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(format!(
+                    "warning: skipping {}: IO error for operation on {}: {}",
+                    path.display(),
+                    path.display(),
+                    e
+                ));
+        },
+    );
+
+    let mut messages = warnings.into_inner().unwrap_or_else(|e| e.into_inner());
+    messages.sort();
+    for message in messages {
+        writeln!(warn, "{}", message)?;
+    }
+
+    let mut matches = matches.into_inner().unwrap_or_else(|e| e.into_inner());
+    matches.sort();
+    matches.dedup();
+
+    // Predicate: return true to measure path, false to skip (subdirectory of a marker).
+    fn should_measure(path: &Path, marker_roots: &[PathBuf]) -> bool {
+        // Only skip if path is strictly inside another marker root.
+        marker_roots
+            .iter()
+            .filter(|marker| *marker != path)
+            .all(|marker| !path.starts_with(marker))
+    }
+
+    Ok((
+        matches.clone(),
+        Box::new(move |path: &Path| -> bool { should_measure(path, &matches) }),
+    ))
+}
+
 /// A directory that matched a policy, with the size that justified the match.
 pub(crate) struct Candidate<'a> {
     pub(crate) path: PathBuf,
