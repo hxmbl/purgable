@@ -181,6 +181,14 @@ One trap when microbenchmarking unlink: count the files actually deleted. A
 harness whose `unlinkat` silently fails with `ENOENT` reports orders of
 magnitude faster than it is, because it deleted nothing.
 
+### Walk benchmarks
+
+The walk load-balance harness lives next to the walker in `src/parallel.rs`:
+synthetic trees (broad/shallow, deep/narrow, mixed) run through
+`parallel::walk` with per-thread entry instrumentation, across worker counts
+pinned through the internal `THREAD_POOL_OVERRIDE`. The tests are `#[ignore]`d;
+run them with `cargo test -- --ignored`.
+
 ## Version Management
 
 - Update version in `Cargo.toml`

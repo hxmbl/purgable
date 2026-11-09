@@ -19,11 +19,20 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Condvar, Mutex, MutexGuard};
 use std::thread;
 
+/// Override for the worker count, so tests and benchmarks can pin the pool
+/// size without touching the process environment. `0` means "use the default".
+static THREAD_POOL_OVERRIDE: AtomicUsize = AtomicUsize::new(0);
+
 /// How many threads to use for filesystem work.
 ///
 /// Override with `PURGABLE_JOBS` when benchmarking or when a scan is
-/// competing with a build for the disk.
+/// competing with a build for the disk; tests and benchmarks can set
+/// [`THREAD_POOL_OVERRIDE`] directly instead of going through the environment.
 pub(crate) fn thread_count() -> usize {
+    let overridden = THREAD_POOL_OVERRIDE.load(Ordering::Relaxed);
+    if overridden != 0 {
+        return overridden.clamp(1, 64);
+    }
     if let Some(raw) = std::env::var_os("PURGABLE_JOBS") {
         if let Some(n) = raw.to_str().and_then(|s| s.trim().parse::<usize>().ok()) {
             return n.clamp(1, 64);
@@ -234,8 +243,9 @@ fn chunk_worker_count(item_count: usize, chunk_size: usize, max_workers: usize) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::write_dir_with_content;
+    use crate::test_support::{write_dir_with_content, write_file};
     use std::sync::Mutex;
+    use std::time::Instant;
 
     fn tree(root: &Path) {
         // A deliberately lopsided tree: one wide directory and one deep one,
@@ -455,5 +465,164 @@ mod tests {
     fn test_for_each_chunk_on_empty_slice() {
         let items: Vec<usize> = Vec::new();
         for_each_chunk(&items, 8, |_| panic!("must not be called"));
+    }
+
+    // ------------------------------------------------------------------
+    // STRM-477: walk load-balance benchmark harness.
+    //
+    // Runs synthetic trees through `walk` and reports how the work spread
+    // over the worker threads: elapsed time, entries processed per thread,
+    // and the per-thread distribution. Ignored by default; run with
+    // `cargo test -- --ignored`.
+    // ------------------------------------------------------------------
+
+    /// Instrumentation for one `walk` run: how many entries each visiting
+    /// thread processed, and the grand total.
+    #[derive(Default)]
+    struct WalkRunStats {
+        per_thread: Mutex<Vec<(thread::ThreadId, usize)>>,
+        total: AtomicUsize,
+    }
+
+    impl WalkRunStats {
+        fn new() -> Self {
+            Self::default()
+        }
+
+        fn record(&self, entries: usize) {
+            self.total.fetch_add(entries, Ordering::Relaxed);
+            let mut per_thread = self.per_thread.lock().unwrap_or_else(|e| e.into_inner());
+            let id = thread::current().id();
+            if let Some(slot) = per_thread.iter_mut().find(|(tid, _)| *tid == id) {
+                slot.1 += entries;
+            } else {
+                per_thread.push((id, entries));
+            }
+        }
+
+        fn per_thread(&self) -> Vec<(thread::ThreadId, usize)> {
+            self.per_thread
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .clone()
+        }
+
+        fn total(&self) -> usize {
+            self.total.load(Ordering::Relaxed)
+        }
+    }
+
+    /// Run one `walk` over `root` while counting entries per visiting thread
+    /// and timing the run.
+    fn benchmark_walk_once(root: &Path) -> (std::time::Duration, WalkRunStats) {
+        let stats = WalkRunStats::new();
+        let start = Instant::now();
+        let root_buf = root.to_path_buf();
+        walk(
+            std::slice::from_ref(&root_buf),
+            |cursor, _, entries| {
+                let children: Vec<_> = entries.flatten().collect();
+                stats.record(children.len());
+                for entry in children {
+                    if entry.file_type().is_ok_and(|t| t.is_dir()) {
+                        cursor.descend(entry.path());
+                    }
+                }
+            },
+            |_, _| {},
+        );
+        (start.elapsed(), stats)
+    }
+
+    fn write_wide_tree(root: &Path) {
+        // Broad and shallow: many top-level directories, each with a few
+        // subdirectories of files. The queue fans out wide.
+        fs::create_dir_all(root).unwrap();
+        for i in 0..64 {
+            let top = root.join(format!("d{i}"));
+            fs::create_dir_all(&top).unwrap();
+            for j in 0..8 {
+                let sub = top.join(format!("s{j}"));
+                fs::create_dir_all(&sub).unwrap();
+                for f in 0..4 {
+                    write_file(&sub.join(format!("f{f}")), "x");
+                }
+            }
+        }
+    }
+
+    fn write_deep_tree(root: &Path) {
+        // Narrow and deep: a single chain of nested directories.
+        let mut dir = root.to_path_buf();
+        fs::create_dir_all(&dir).unwrap();
+        for _ in 0..12 {
+            dir = dir.join("level");
+            fs::create_dir_all(&dir).unwrap();
+        }
+        write_file(&dir.join("deep.txt"), "x");
+    }
+
+    fn write_mixed_tree(root: &Path) {
+        // A dozen projects at two levels of depth, each holding nested crates.
+        fs::create_dir_all(root).unwrap();
+        for p in 0..12 {
+            let project = root.join(format!("p{p}"));
+            fs::create_dir_all(&project).unwrap();
+            for c in 0..3 {
+                let crate_dir = project.join(format!("crate{c}"));
+                fs::create_dir_all(&crate_dir).unwrap();
+                for f in 0..2 {
+                    write_file(&crate_dir.join(format!("f{f}")), "x");
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[ignore = "STRM-477: synthetic walk load-balance benchmark; run with `cargo test -- --ignored`"]
+    fn benchmark_walk_load_balance_wide_tree() {
+        let dir = tempfile::tempdir().unwrap();
+        write_wide_tree(dir.path());
+        for jobs in [1_usize, 2, 4, 8] {
+            THREAD_POOL_OVERRIDE.store(jobs, Ordering::Relaxed);
+            let (elapsed, stats) = benchmark_walk_once(dir.path());
+            let per_thread = stats.per_thread();
+            eprintln!(
+                "benchmark wide: jobs={jobs} elapsed={elapsed:?} entries={} per_thread={per_thread:?}",
+                stats.total()
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "STRM-477: synthetic walk load-balance benchmark; run with `cargo test -- --ignored`"]
+    fn benchmark_walk_load_balance_deep_tree() {
+        let dir = tempfile::tempdir().unwrap();
+        write_deep_tree(dir.path());
+        for jobs in [1_usize, 2, 4, 8] {
+            THREAD_POOL_OVERRIDE.store(jobs, Ordering::Relaxed);
+            let (elapsed, stats) = benchmark_walk_once(dir.path());
+            eprintln!(
+                "benchmark deep: jobs={jobs} elapsed={elapsed:?} entries={} per_thread={:?}",
+                stats.total(),
+                stats.per_thread()
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "STRM-477: synthetic walk load-balance benchmark; run with `cargo test -- --ignored`"]
+    fn benchmark_walk_load_balance_mixed_tree() {
+        let dir = tempfile::tempdir().unwrap();
+        write_mixed_tree(dir.path());
+        for jobs in [1_usize, 2, 4, 8] {
+            THREAD_POOL_OVERRIDE.store(jobs, Ordering::Relaxed);
+            let (elapsed, stats) = benchmark_walk_once(dir.path());
+            eprintln!(
+                "benchmark mixed: jobs={jobs} elapsed={elapsed:?} entries={} per_thread={:?}",
+                stats.total(),
+                stats.per_thread()
+            );
+        }
     }
 }
