@@ -1,7 +1,7 @@
 //! Locating what to purge: validating the root, finding marked directories by
 //! marker, and finding policy matches to mark in the first place.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -86,6 +86,81 @@ pub(crate) fn find(root: &str, warn: &mut impl io::Write) -> io::Result<Vec<Path
     matches.sort();
     matches.dedup();
     Ok(matches)
+}
+
+/// Find markers but also track which subtrees have already been sized,
+/// so nested markers don't cause duplicate traversal.
+///
+/// Returns (markers, visited_set) where `visited_set` contains all directories
+/// that were already walked during the marker discovery pass. This information
+/// can be used by callers to skip re-size operations.
+#[allow(dead_code)]
+pub(crate) fn find_with_track(
+    root: &str,
+    warn: &mut impl io::Write,
+) -> io::Result<(Vec<PathBuf>, HashSet<PathBuf>)> {
+    let matches: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+    // Track every directory that was visited in the walk -- this includes
+    // both marked directories and all their subdirectories.
+    let visited: Mutex<HashSet<PathBuf>> = Mutex::new(HashSet::new());
+    let warnings: Mutex<Vec<String>> = Mutex::new(Vec::new());
+
+    parallel::walk(
+        &[PathBuf::from(root)],
+        |cursor, dir_path, entries| {
+            // Record that we visited this directory itself.
+            visited
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .insert(dir_path.to_path_buf());
+            for entry in entries.flatten() {
+                let Ok(file_type) = entry.file_type() else {
+                    continue;
+                };
+                if file_type.is_dir() {
+                    // Track subdirectories too, so nested markers don't
+                    // cause duplicate work later.
+                    visited
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .insert(entry.path().to_path_buf());
+                    cursor.descend(entry.path());
+                } else if file_type.is_file() && entry.file_name() == target_os() {
+                    let path = entry.path();
+                    if let Some(parent) = path.parent() {
+                        matches
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .push(parent.to_path_buf());
+                    }
+                }
+            }
+        },
+        |path, e| {
+            warnings
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(format!(
+                    "warning: skipping {}: IO error for operation on {}: {}",
+                    path.display(),
+                    path.display(),
+                    e
+                ));
+        },
+    );
+
+    let mut messages = warnings.into_inner().unwrap_or_else(|e| e.into_inner());
+    messages.sort();
+    for message in messages {
+        writeln!(warn, "{}", message)?;
+    }
+
+    let mut matches = matches.into_inner().unwrap_or_else(|e| e.into_inner());
+    // Sort AFTER deduplication to avoid keeping unsorted duplicates.
+    matches.sort();
+    matches.dedup();
+    let visited = visited.into_inner().unwrap_or_else(|e| e.into_inner());
+    Ok((matches, visited))
 }
 
 /// Find marker paths and build subtree filter.
