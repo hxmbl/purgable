@@ -204,9 +204,9 @@ where
     if items.is_empty() {
         return;
     }
-    let threads = thread_count();
     let chunk = chunk.max(1);
-    if threads == 1 {
+    let workers = chunk_worker_count(items.len(), chunk, thread_count());
+    if workers == 1 {
         for slice in items.chunks(chunk) {
             f(slice);
         }
@@ -214,7 +214,7 @@ where
     }
     let next = AtomicUsize::new(0);
     thread::scope(|scope| {
-        for _ in 0..threads {
+        for _ in 0..workers {
             scope.spawn(|| loop {
                 let start = next.fetch_add(chunk, Ordering::Relaxed);
                 if start >= items.len() {
@@ -225,6 +225,10 @@ where
             });
         }
     });
+}
+
+fn chunk_worker_count(item_count: usize, chunk_size: usize, max_workers: usize) -> usize {
+    item_count.div_ceil(chunk_size.max(1)).min(max_workers)
 }
 
 #[cfg(test)]
@@ -416,16 +420,35 @@ mod tests {
     }
 
     #[test]
-    fn test_for_each_chunk_covers_everything_once() {
-        let items: Vec<usize> = (0..1000).collect();
-        let seen: Mutex<Vec<usize>> = Mutex::new(Vec::new());
-        for_each_chunk(&items, 7, |slice| {
-            let mut guard = seen.lock().unwrap();
-            guard.extend_from_slice(slice);
-        });
-        let mut seen = seen.into_inner().unwrap();
-        seen.sort_unstable();
-        assert_eq!(seen, items);
+    fn test_for_each_chunk_covers_requested_sizes_once() {
+        for item_count in [1_usize, 2, 8, 16, 64, 1024] {
+            let items: Vec<usize> = (0..item_count).collect();
+            for chunk_size in [0_usize, 1, 2, 8, 16, 64, 1024] {
+                let seen: Mutex<Vec<usize>> = Mutex::new(Vec::new());
+                for_each_chunk(&items, chunk_size, |slice| {
+                    seen.lock().unwrap().extend_from_slice(slice);
+                });
+                let mut seen = seen.into_inner().unwrap();
+                seen.sort_unstable();
+                assert_eq!(seen, items, "items={item_count}, chunk={chunk_size}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_chunk_worker_count_never_exceeds_available_chunks() {
+        for item_count in [0_usize, 1, 2, 8, 16, 64, 1024] {
+            for chunk_size in [0_usize, 1, 2, 8, 16, 64, 1024] {
+                for max_workers in [1, 2, 8, 16, 64] {
+                    let chunks = item_count.div_ceil(chunk_size.max(1));
+                    assert_eq!(
+                        chunk_worker_count(item_count, chunk_size, max_workers),
+                        chunks.min(max_workers),
+                        "items={item_count}, chunk={chunk_size}, workers={max_workers}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]
