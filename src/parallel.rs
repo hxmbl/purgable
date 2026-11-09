@@ -563,18 +563,27 @@ mod tests {
     }
 
     fn write_mixed_tree(root: &Path) {
-        // A dozen projects at two levels of depth, each holding nested crates.
+        // One deep, file-heavy subtree next to many small shallow branches, so
+        // the mixed shape has both a hot and a cold side.
+        let heavy = root.join("heavy");
+        let mut dir = heavy.clone();
+        fs::create_dir_all(&dir).unwrap();
+        for _ in 0..50 {
+            dir = dir.join("l");
+            fs::create_dir_all(&dir).unwrap();
+            write_file(&dir.join("big.bin"), &"x".repeat(1024));
+        }
+        for s in 0..40 {
+            write_dir_with_content(&root.join(format!("small{s}")), &[("f", "x")]);
+        }
+    }
+
+    fn write_high_fanout_tree(root: &Path) {
+        // More than 4,096 child directories in one level, so the bounded shared
+        // queue has to spill into worker-local stacks.
         fs::create_dir_all(root).unwrap();
-        for p in 0..12 {
-            let project = root.join(format!("p{p}"));
-            fs::create_dir_all(&project).unwrap();
-            for c in 0..3 {
-                let crate_dir = project.join(format!("crate{c}"));
-                fs::create_dir_all(&crate_dir).unwrap();
-                for f in 0..2 {
-                    write_file(&crate_dir.join(format!("f{f}")), "x");
-                }
-            }
+        for i in 0..8_192 {
+            write_dir_with_content(&root.join(format!("d{i}")), &[("f", "x")]);
         }
     }
 
@@ -622,6 +631,22 @@ mod tests {
                 "benchmark mixed: jobs={jobs} elapsed={elapsed:?} entries={} per_thread={:?}",
                 stats.total(),
                 stats.per_thread()
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "STRM-477: synthetic walk load-balance benchmark; run with `cargo test -- --ignored`"]
+    fn benchmark_walk_load_balance_high_fanout_tree() {
+        let dir = tempfile::tempdir().unwrap();
+        write_high_fanout_tree(dir.path());
+        for jobs in [1_usize, 2, 4, 8] {
+            THREAD_POOL_OVERRIDE.store(jobs, Ordering::Relaxed);
+            let (elapsed, stats) = benchmark_walk_once(dir.path());
+            let per_thread = stats.per_thread();
+            eprintln!(
+                "benchmark high_fanout: jobs={jobs} elapsed={elapsed:?} entries={} per_thread={per_thread:?}",
+                stats.total()
             );
         }
     }
