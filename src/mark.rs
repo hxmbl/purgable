@@ -552,6 +552,97 @@ mod tests {
     }
 
     #[test]
+    fn test_mark_finds_nested_match_inside_undersized_parent() {
+        // A directory can pass every structural guard but be too small for its
+        // policy. It used to be descended into in that case, so a nested policy
+        // with a lower threshold must still be found now that sizing is
+        // deferred to a single pass.
+        let dir = tempfile::tempdir().unwrap();
+        let project = dir.path().join("app");
+        write_file(&project.join("Cargo.toml"), "x");
+        write_file(&project.join("target/small.txt"), "x");
+        write_file(&project.join("target/node_modules/blob"), &"x".repeat(2048));
+
+        let config = parse_config(
+            r#"
+        [defaults]
+        min_size = "1M"
+
+        [[policy]]
+        name = "cargo-target"
+        dir_name = "target"
+        require_sibling = ["Cargo.toml"]
+
+        [[policy]]
+        name = "node-modules"
+        dir_name = "node_modules"
+        min_size = "1"
+        "#,
+        )
+        .unwrap();
+
+        let mut out = Vec::new();
+        let stats = mark(
+            dir.path().to_str().unwrap(),
+            &config,
+            &[],
+            None,
+            opts(),
+            &mut out,
+            &mut io::stderr(),
+        )
+        .unwrap();
+
+        assert_eq!(stats.matched, 1);
+        assert!(!project.join("target").join(TARGET).exists());
+        let marker = read_marker(&project.join("target/node_modules"));
+        assert_eq!(marker.policy.as_deref(), Some("node-modules"));
+    }
+
+    #[test]
+    fn test_mark_first_policy_meeting_its_threshold_wins() {
+        // Both policies claim `target`; the first is too strict for this
+        // directory, so the second one should win without re-measuring it.
+        let dir = tempfile::tempdir().unwrap();
+        let project = fake_cargo_project(dir.path(), "app", 2048);
+        let config = parse_config(
+            r#"
+        [defaults]
+        min_size = "1M"
+
+        [[policy]]
+        name = "strict-target"
+        dir_name = "target"
+        require_sibling = ["Cargo.toml"]
+        min_size = "1M"
+
+        [[policy]]
+        name = "loose-target"
+        dir_name = "target"
+        require_sibling = ["Cargo.toml"]
+        min_size = "1"
+        "#,
+        )
+        .unwrap();
+
+        let mut out = Vec::new();
+        let stats = mark(
+            dir.path().to_str().unwrap(),
+            &config,
+            &[],
+            None,
+            opts(),
+            &mut out,
+            &mut io::stderr(),
+        )
+        .unwrap();
+
+        assert_eq!(stats.matched, 1);
+        let marker = read_marker(&project.join("target"));
+        assert_eq!(marker.policy.as_deref(), Some("loose-target"));
+    }
+
+    #[test]
     fn test_mark_skips_git_directories() {
         let dir = tempfile::tempdir().unwrap();
         let project = fake_cargo_project(dir.path(), "app", 2 * 1024 * 1024);

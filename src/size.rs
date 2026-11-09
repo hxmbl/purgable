@@ -1,8 +1,9 @@
 //! Size accounting and human-readable formatting of sizes, ages, and
 //! timestamps.
 
-use std::fs;
-use std::path::{Path, PathBuf};
+#[cfg(test)]
+use std::path::Path;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -51,29 +52,6 @@ pub(crate) fn dir_sizes(paths: &[PathBuf]) -> Vec<u64> {
         |_, _| {},
     );
     totals.iter().map(|t| t.load(Ordering::Relaxed)).collect()
-}
-
-/// Single-threaded size of one directory, for use from inside a walk that is
-/// already running across every core.
-pub(crate) fn seq_dir_size(path: &Path) -> u64 {
-    let mut total = 0u64;
-    let mut pending = vec![path.to_path_buf()];
-    while let Some(dir) = pending.pop() {
-        let Ok(entries) = fs::read_dir(&dir) else {
-            continue;
-        };
-        for entry in entries.flatten() {
-            let Ok(file_type) = entry.file_type() else {
-                continue;
-            };
-            if file_type.is_dir() {
-                pending.push(entry.path());
-            } else if file_type.is_file() {
-                total = total.saturating_add(entry.metadata().map(|m| m.len()).unwrap_or(0));
-            }
-        }
-    }
-    total
 }
 
 pub(crate) fn human_size(bytes: u64) -> String {
@@ -195,15 +173,5 @@ mod tests {
     #[test]
     fn test_dir_sizes_on_no_roots_is_empty() {
         assert!(dir_sizes(&[]).is_empty());
-    }
-
-    #[test]
-    fn test_seq_dir_size_matches_parallel_size() {
-        let dir = tempfile::tempdir().unwrap();
-        let root = dir.path();
-        write_file(&root.join("a/big.bin"), &"x".repeat(2048));
-        write_file(&root.join("a/b/c/small.bin"), &"y".repeat(1024));
-        symlink(root.join("a"), root.join("link")).unwrap();
-        assert_eq!(seq_dir_size(root), dir_size(root));
     }
 }

@@ -111,8 +111,11 @@ is still rejected.
 Because the walk is concurrent, anything a command prints must be collected
 first and sorted before it is written. Every command does this.
 
-`size::seq_dir_size` is the single-threaded size walk, used for policy matching
-from inside `scan_for_policies` so that a scan does not spawn a nested pool.
+`scan_for_policies` separates structural policy matching from sizing: it
+collects candidates first, then measures them all with `size::dir_sizes` in one
+parallel pass. A candidate that is structurally valid but below its policy's
+minimum size is re-scanned afterwards, because the old synchronous code
+descended into it and could still find nested matches.
 
 ## Safety model
 
