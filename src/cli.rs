@@ -224,7 +224,10 @@ pub(crate) fn parse_args(args: &[String]) -> Invocation {
 fn parse_int(name: &str, value: &str) -> i32 {
     match value.parse() {
         Ok(n) => n,
-        Err(_) => fail(&format!("invalid {}: {:?} (expected integer)", name, value), 2),
+        Err(_) => fail(
+            &format!("invalid {}: {:?} (expected integer)", name, value),
+            2,
+        ),
     }
 }
 
@@ -232,16 +235,23 @@ fn parse_int(name: &str, value: &str) -> i32 {
 fn parse_usize(name: &str, value: &str) -> usize {
     match value.parse() {
         Ok(n) => n,
-        Err(_) => fail(&format!("invalid {}: {:?} (expected non-negative integer)", name, value), 2),
+        Err(_) => fail(
+            &format!(
+                "invalid {}: {:?} (expected non-negative integer)",
+                name, value
+            ),
+            2,
+        ),
     }
 }
 
 /// Handle bench and bench-fixtures subcommands.
 fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut impl Write) -> i32 {
-    
     match inv.bench_subcommand.as_deref() {
         Some("generate") => {
-            let output_dir = inv.output.as_deref()
+            let output_dir = inv
+                .output
+                .as_deref()
                 .or(inv.root.as_deref())
                 .unwrap_or("./bench-fixtures");
             let scale = inv.scale.as_deref().unwrap_or("1");
@@ -252,11 +262,13 @@ fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut 
                     return 2;
                 }
             };
-            
-            let count: usize = inv.count.as_deref()
+
+            let count: usize = inv
+                .count
+                .as_deref()
                 .map(|c| parse_usize("--count", c))
                 .unwrap_or(1);
-            
+
             if let Err(e) = generate_fixtures(output_dir, scale_val, count, stdout, stderr) {
                 let _ = writeln!(stderr, "error: {}", e);
                 return 1;
@@ -264,10 +276,12 @@ fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut 
             0
         }
         Some("verify") => {
-            let fixtures_path = inv.fixtures.as_deref()
+            let fixtures_path = inv
+                .fixtures
+                .as_deref()
                 .or(inv.root.as_deref())
                 .unwrap_or("./bench-fixtures");
-            
+
             if let Err(e) = verify_fixtures(fixtures_path, stdout, stderr) {
                 let _ = writeln!(stderr, "error: {}", e);
                 return 1;
@@ -276,14 +290,18 @@ fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut 
         }
         Some("run") => {
             let fixtures_path = inv.fixtures.as_deref().unwrap_or("./bench-fixtures");
-            let jobs = inv.jobs.as_deref()
+            let jobs = inv
+                .jobs
+                .as_deref()
                 .map(|j| parse_usize("--jobs", j))
                 .unwrap_or(1);
-            let runs = inv.runs.as_deref()
+            let runs = inv
+                .runs
+                .as_deref()
                 .map(|r| parse_usize("--runs", r))
                 .unwrap_or(3);
             let output_path = inv.output.as_deref();
-            
+
             if let Err(e) = run_benchmarks(fixtures_path, jobs, runs, output_path, stdout, stderr) {
                 let _ = writeln!(stderr, "error: {}", e);
                 return 1;
@@ -291,11 +309,16 @@ fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut 
             0
         }
         Some("summarize") => {
-            let input_dir = inv.input.as_deref()
+            let input_dir = inv
+                .input
+                .as_deref()
                 .or(inv.root.as_deref())
                 .unwrap_or("./bench-results");
-            let output_path = inv.output.as_deref().unwrap_or("./bench-results/summary.md");
-            
+            let output_path = inv
+                .output
+                .as_deref()
+                .unwrap_or("./bench-results/summary.md");
+
             if let Err(e) = summarize_benchmarks(input_dir, output_path, stdout, stderr) {
                 let _ = writeln!(stderr, "error: {}", e);
                 return 1;
@@ -304,12 +327,18 @@ fn handle_bench_command(inv: &Invocation, stdout: &mut impl Write, stderr: &mut 
         }
         Some(other) => {
             let _ = writeln!(stderr, "error: unknown bench subcommand {:?}", other);
-            let _ = writeln!(stderr, "available subcommands: generate, verify, run, summarize");
+            let _ = writeln!(
+                stderr,
+                "available subcommands: generate, verify, run, summarize"
+            );
             2
         }
         None => {
             let _ = writeln!(stderr, "error: bench requires a subcommand");
-            let _ = writeln!(stderr, "available subcommands: generate, verify, run, summarize");
+            let _ = writeln!(
+                stderr,
+                "available subcommands: generate, verify, run, summarize"
+            );
             2
         }
     }
@@ -345,25 +374,25 @@ fn generate_fixtures(
     _stderr: &mut impl Write,
 ) -> io::Result<()> {
     use crate::benchmark::count_fixture_contents;
-    
+
     let output = PathBuf::from(output_dir);
     fs::create_dir_all(&output)?;
-    
+
     let multiplier = scale as usize;
     let mut total_dirs = 0usize;
     let mut total_files = 0usize;
     let mut total_size = 0u64;
-    
+
     for fixture_idx in 0..count {
         let fixture_dir = output.join(format!("fixture_{}", fixture_idx));
         fs::create_dir_all(&fixture_dir)?;
-        
+
         // Create a mix of structures similar to real projects
         // Small nested project structure
         for proj in 0..(10 * multiplier) {
             let proj_dir = fixture_dir.join(format!("project_{}", proj));
             bench_write_dir_with_content(&proj_dir, &[("PURGABLE", "")])?;
-            
+
             // src directory
             let src_dir = proj_dir.join("src");
             fs::create_dir_all(&src_dir)?;
@@ -372,7 +401,7 @@ fn generate_fixtures(
                 bench_write_file(&src_dir.join(format!("file_{}.rs", file)), &content)?;
                 total_size += content.len() as u64;
             }
-            
+
             // target directory (simulated build output)
             let target_dir = proj_dir.join("target");
             bench_write_dir_with_content(&target_dir, &[("PURGABLE", "")])?;
@@ -385,7 +414,7 @@ fn generate_fixtures(
                     total_size += content.len() as u64;
                 }
             }
-            
+
             // node_modules
             let node_dir = proj_dir.join("node_modules");
             bench_write_dir_with_content(&node_dir, &[("PURGABLE", "")])?;
@@ -403,7 +432,7 @@ fn generate_fixtures(
                 }
             }
         }
-        
+
         // Also create some standalone markers
         for standalone in 0..(5 * multiplier) {
             let dir = fixture_dir.join(format!("standalone_{}", standalone));
@@ -414,18 +443,24 @@ fn generate_fixtures(
                 total_size += content.len() as u64;
             }
         }
-        
+
         let (dirs, files) = count_fixture_contents(&fixture_dir)?;
         total_dirs += dirs;
         total_files += files;
-        
-        let _ = writeln!(stdout, "Generated fixture {}: {} dirs, {} files, {} bytes", 
-            fixture_idx, dirs, files, total_size);
+
+        let _ = writeln!(
+            stdout,
+            "Generated fixture {}: {} dirs, {} files, {} bytes",
+            fixture_idx, dirs, files, total_size
+        );
     }
-    
-    let _ = writeln!(stdout, "\nTotal: {} dirs, {} files, {} bytes across {} fixtures",
-        total_dirs, total_files, total_size, count);
-    
+
+    let _ = writeln!(
+        stdout,
+        "\nTotal: {} dirs, {} files, {} bytes across {} fixtures",
+        total_dirs, total_files, total_size, count
+    );
+
     Ok(())
 }
 
@@ -436,15 +471,19 @@ fn verify_fixtures(
     stderr: &mut impl Write,
 ) -> io::Result<()> {
     use std::process::Command;
-    
+
     let fixtures = PathBuf::from(fixtures_path);
     if !fixtures.exists() {
-        let _ = writeln!(stderr, "Fixtures directory {} does not exist", fixtures.display());
+        let _ = writeln!(
+            stderr,
+            "Fixtures directory {} does not exist",
+            fixtures.display()
+        );
         return Ok(());
     }
-    
+
     let mut total_verified = 0usize;
-    
+
     for entry in fs::read_dir(&fixtures)? {
         let entry = entry?;
         let path = entry.path();
@@ -455,19 +494,26 @@ fn verify_fixtures(
                 .arg("-name")
                 .arg("PURGABLE")
                 .output()?;
-            
+
             let stdout_str = String::from_utf8_lossy(&output.stdout);
             let marker_count = stdout_str.lines().count();
             total_verified += marker_count;
-            
-            let _ = writeln!(stdout, "Fixture {}: {} markers found", 
-                path.file_name().unwrap_or_default().to_string_lossy(), 
-                marker_count);
+
+            let _ = writeln!(
+                stdout,
+                "Fixture {}: {} markers found",
+                path.file_name().unwrap_or_default().to_string_lossy(),
+                marker_count
+            );
         }
     }
-    
-    let _ = writeln!(stdout, "\nVerified {} total markers across all fixtures", total_verified);
-    
+
+    let _ = writeln!(
+        stdout,
+        "\nVerified {} total markers across all fixtures",
+        total_verified
+    );
+
     Ok(())
 }
 
@@ -481,29 +527,41 @@ fn run_benchmarks(
     stderr: &mut impl Write,
 ) -> io::Result<()> {
     use std::process::Command;
-    
+
     let fixtures = PathBuf::from(fixtures_path);
     if !fixtures.exists() {
-        let _ = writeln!(stderr, "Fixtures directory {} does not exist", fixtures.display());
+        let _ = writeln!(
+            stderr,
+            "Fixtures directory {} does not exist",
+            fixtures.display()
+        );
         return Ok(());
     }
-    
+
     let env_jobs = format!("PURGABLE_JOBS={}", jobs);
-    let _ = writeln!(stdout, "Running benchmarks with PURGABLE_JOBS={}, {} runs", jobs, runs);
+    let _ = writeln!(
+        stdout,
+        "Running benchmarks with PURGABLE_JOBS={}, {} runs",
+        jobs, runs
+    );
     let _ = writeln!(stdout);
-    
+
     for entry in fs::read_dir(&fixtures)? {
         let entry = entry?;
         let path = entry.path();
         if path.is_dir() {
-            let _ = writeln!(stdout, "Benchmarking fixture: {}", 
-                path.file_name().unwrap_or_default().to_string_lossy());
-            
+            let _ = writeln!(
+                stdout,
+                "Benchmarking fixture: {}",
+                path.file_name().unwrap_or_default().to_string_lossy()
+            );
+
             // Run list command multiple times
             let mut times = Vec::new();
             for run_idx in 0..runs {
                 let start = std::time::Instant::now();
-                let purgable_path = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("purgable"));
+                let purgable_path =
+                    std::env::current_exe().unwrap_or_else(|_| PathBuf::from("purgable"));
                 let status = Command::new(&purgable_path)
                     .env("PURGABLE_JOBS", &env_jobs)
                     .arg("list")
@@ -511,22 +569,37 @@ fn run_benchmarks(
                     .status()?;
                 let elapsed = start.elapsed();
                 times.push(elapsed);
-                
+
                 if !status.success() {
-                    let _ = writeln!(stderr, "  Run {} failed with exit code {}", run_idx, status.code().unwrap_or(-1));
+                    let _ = writeln!(
+                        stderr,
+                        "  Run {} failed with exit code {}",
+                        run_idx,
+                        status.code().unwrap_or(-1)
+                    );
                 }
             }
-            
+
             // Compute statistics
             let sum_ms: f64 = times.iter().map(|t| t.as_secs_f64() * 1000.0).sum();
             let mean_ms = sum_ms / times.len() as f64;
-            let min_ms = times.iter().map(|t| t.as_secs_f64() * 1000.0).fold(f64::INFINITY, f64::min);
-            let max_ms = times.iter().map(|t| t.as_secs_f64() * 1000.0).fold(f64::NEG_INFINITY, f64::max);
-            
-            let _ = writeln!(stdout, "  list: mean={:.2}ms, min={:.2}ms, max={:.2}ms", mean_ms, min_ms, max_ms);
+            let min_ms = times
+                .iter()
+                .map(|t| t.as_secs_f64() * 1000.0)
+                .fold(f64::INFINITY, f64::min);
+            let max_ms = times
+                .iter()
+                .map(|t| t.as_secs_f64() * 1000.0)
+                .fold(f64::NEG_INFINITY, f64::max);
+
+            let _ = writeln!(
+                stdout,
+                "  list: mean={:.2}ms, min={:.2}ms, max={:.2}ms",
+                mean_ms, min_ms, max_ms
+            );
         }
     }
-    
+
     Ok(())
 }
 
@@ -539,17 +612,17 @@ fn summarize_benchmarks(
 ) -> io::Result<()> {
     use std::fs::File;
     use std::io::Write as _;
-    
+
     let input = PathBuf::from(input_dir);
     if !input.exists() {
         let _ = writeln!(stderr, "Input directory {} does not exist", input.display());
         return Ok(());
     }
-    
+
     let mut summary = String::new();
     summary.push_str("# Benchmark Summary\n\n");
     summary.push_str("Results from benchmark runs.\n\n");
-    
+
     // Collect all result files
     let mut results = Vec::new();
     for entry in fs::read_dir(&input)? {
@@ -557,10 +630,16 @@ fn summarize_benchmarks(
         let path = entry.path();
         if path.extension().is_some_and(|ext| ext == "json") {
             let content = fs::read_to_string(&path)?;
-            results.push((path.file_name().unwrap_or_default().to_string_lossy().into_owned(), content));
+            results.push((
+                path.file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned(),
+                content,
+            ));
         }
     }
-    
+
     if results.is_empty() {
         summary.push_str("No benchmark result files found.\n");
     } else {
@@ -569,13 +648,16 @@ fn summarize_benchmarks(
             summary.push_str(&format!("- {}\n", name));
             // Try to pretty-print JSON if possible
             if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(content) {
-                summary.push_str(&format!("  {}\n", serde_json::to_string_pretty(&parsed).unwrap_or_else(|_| content.clone())));
+                summary.push_str(&format!(
+                    "  {}\n",
+                    serde_json::to_string_pretty(&parsed).unwrap_or_else(|_| content.clone())
+                ));
             } else {
                 summary.push_str(&format!("  {}\n", content));
             }
         }
     }
-    
+
     // Write to output
     let output = PathBuf::from(output_path);
     if let Some(parent) = output.parent() {
@@ -583,9 +665,9 @@ fn summarize_benchmarks(
     }
     let mut file = File::create(&output)?;
     file.write_all(summary.as_bytes())?;
-    
+
     let _ = writeln!(stdout, "Wrote summary to {}", output.display());
-    
+
     Ok(())
 }
 
@@ -729,9 +811,7 @@ pub(crate) fn run() -> i32 {
             0
         }
 
-        "bench" | "bench-fixtures" => {
-            handle_bench_command(&inv, &mut stdout, &mut stderr)
-        }
+        "bench" | "bench-fixtures" => handle_bench_command(&inv, &mut stdout, &mut stderr),
 
         other => {
             // Backwards compatibility: `purgable <directory>` behaved as review.
