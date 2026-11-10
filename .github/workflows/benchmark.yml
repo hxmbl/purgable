@@ -3,16 +3,16 @@ name: Benchmark
 on:
   workflow_dispatch:
     inputs:
-      runs:
-        description: "Number of benchmark runs per configuration"
-        required: false
-        default: "3"
       jobs:
-        description: "Comma-separated PURGABLE_JOBS values to test"
+        description: "Comma-separated PURGABLE_JOBS values"
         required: false
-        default: "1,2,4,8"
-      fixture_scale:
-        description: "Fixture scale factor (1=small, 2=medium, 3=large)"
+        default: "1,2,4"
+      reps:
+        description: "Repetitions for read-only measurements (minimum 5)"
+        required: false
+        default: "5"
+      scale:
+        description: "Fixture scale factor (1 = historical shape)"
         required: false
         default: "1"
 
@@ -21,70 +21,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build release binary
-        run: cargo build --release --locked
-
-      - name: Get environment info
-        id: env
+      - name: Build release binary and runner
         run: |
-          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-          echo "version=$(cargo run --quiet --release -- --version 2>/dev/null || echo 'unknown')" >> $GITHUB_OUTPUT
-          echo "os=$(uname -s -m)" >> $GITHUB_OUTPUT
-          echo "cpu=$(nproc --all)" >> $GITHUB_OUTPUT
-          echo "filesystem=$(df -T ${{ github.workspace }} | tail -1 | awk '{print $2}')" >> $GITHUB_OUTPUT
-          echo "kernel=$(uname -r)" >> $GITHUB_OUTPUT
-          echo "rustc=$(rustc --version)" >> $GITHUB_OUTPUT
-
-      - name: Create benchmark fixtures
-        run: |
-          mkdir -p ${{ github.workspace }}/bench-fixtures
-          cargo run --quiet --release -- bench-fixtures generate \
-            --output ${{ github.workspace }}/bench-fixtures \
-            --scale ${{ inputs.fixture_scale }}
+          cargo build --release --locked
+          cargo build --release --locked --example bench
 
       - name: Run benchmarks
-        id: bench
-        env:
-          PURGABLE_BENCH_RUNS: ${{ inputs.runs }}
         run: |
-          mkdir -p ${{ github.workspace }}/bench-results
-          IFS=',' read -ra JOB_VALUES <<< "${{ inputs.jobs }}"
-          for jobs in "${JOB_VALUES[@]}"; do
-            export PURGABLE_JOBS=$jobs
-            echo "::group::Benchmarking with PURGABLE_JOBS=$jobs"
-            cargo run --quiet --release -- bench run \
-              --fixtures ${{ github.workspace }}/bench-fixtures \
-              --jobs $jobs \
-              --runs ${{ inputs.runs }} \
-              --output ${{ github.workspace }}/bench-results/results_${{ inputs.fixture_scale }}_jobs_${jobs}.json
-            echo "::endgroup::"
-          done
-          
-          # Generate summary
-          cargo run --quiet --release -- bench summarize \
-            --input ${{ github.workspace }}/bench-results \
-            --output ${{ github.workspace }}/bench-results/summary.md
-
-      - name: Verify destructive runs
-        run: |
-          # Verify fixtures can be recreated and cleaned up properly
-          cargo run --quiet --release -- bench-fixtures verify \
-            --fixtures ${{ github.workspace }}/bench-fixtures
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v5
-        with:
-          name: benchmark-results-scale-${{ inputs.fixture_scale }}
-          path: |
-            ${{ github.workspace }}/bench-results/
-            ${{ github.workspace }}/bench-fixtures/
-          compression-level: 0
+          target/release/examples/bench run \
+            --jobs "${{ inputs.jobs }}" \
+            --reps "${{ inputs.reps }}" \
+            --scale "${{ inputs.scale }}" \
+            --work "$RUNNER_TEMP/bench-fixtures" \
+            --out bench-results
 
       - name: Post summary
-        run: |
-          cat ${{ github.workspace }}/bench-results/summary.md >> $GITHUB_STEP_SUMMARY
+        if: always()
+        run: cat bench-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: benchmark-results
+          path: bench-results/

@@ -1,0 +1,3447 @@
+{
+  "environment": {
+    "arch": "x86_64",
+    "binary_version": "purgable v2.3",
+    "cache": "warm: fixtures are created immediately before each measurement and the page cache is never dropped",
+    "commit": "f42612e52efab08a919bfc83a5771eb85e7001b7",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "dirty": true,
+    "filesystem": "ext2/ext3",
+    "logical_cores": 2,
+    "os": "Linux 6.1.189+",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+  },
+  "results": [
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        32.741977,
+        23.597371,
+        22.932433,
+        22.283962,
+        22.239885
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 32.741977,
+        "mean_ms": 24.759125599999997,
+        "median_ms": 22.932433,
+        "min_ms": 22.239885,
+        "n": 5,
+        "spread_ms": 10.502091999999998,
+        "stddev_ms": 4.022074194428819
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        16.038501,
+        15.778389,
+        15.623531,
+        16.057134,
+        15.714546
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 16.057134,
+        "mean_ms": 15.8424202,
+        "median_ms": 15.778389,
+        "min_ms": 15.623531,
+        "n": 5,
+        "spread_ms": 0.4336030000000015,
+        "stddev_ms": 0.17487937758054892
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        28.026145,
+        28.280901,
+        26.834963,
+        26.546229,
+        26.239053
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 28.280901,
+        "mean_ms": 27.1854582,
+        "median_ms": 26.834963,
+        "min_ms": 26.239053,
+        "n": 5,
+        "spread_ms": 2.0418480000000017,
+        "stddev_ms": 0.816565108452327
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        18.931393,
+        19.02576,
+        19.755460999999997,
+        19.108504,
+        19.100209
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 19.755460999999997,
+        "mean_ms": 19.184265399999997,
+        "median_ms": 19.100209,
+        "min_ms": 18.931393,
+        "n": 5,
+        "spread_ms": 0.8240679999999969,
+        "stddev_ms": 0.2926219725451925
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        29.281822,
+        28.188159,
+        27.197065,
+        26.389515999999997,
+        26.127425
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 29.281822,
+        "mean_ms": 27.4367974,
+        "median_ms": 27.197065,
+        "min_ms": 26.127425,
+        "n": 5,
+        "spread_ms": 3.1543969999999995,
+        "stddev_ms": 1.169391813280494
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        18.865218,
+        19.177878,
+        19.257881,
+        19.320167,
+        19.143083
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 19.320167,
+        "mean_ms": 19.1528454,
+        "median_ms": 19.177878,
+        "min_ms": 18.865218,
+        "n": 5,
+        "spread_ms": 0.4549489999999992,
+        "stddev_ms": 0.15651226906616633
+      },
+      "valid_samples": 5,
+      "workload": "historical"
+    },
+    {
+      "files_per_s": 56013.90099717519,
+      "jobs": 1,
+      "mib_per_s": 684.189513835081,
+      "op": "delete",
+      "raw_samples_ms": [
+        168.690039,
+        143.25015499999998,
+        140.197189
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 168.690039,
+        "mean_ms": 150.712461,
+        "median_ms": 143.25015499999998,
+        "min_ms": 140.197189,
+        "n": 3,
+        "spread_ms": 28.492850000000004,
+        "stddev_ms": 12.773021918842652
+      },
+      "valid_samples": 3,
+      "workload": "historical"
+    },
+    {
+      "files_per_s": 66546.63502594225,
+      "jobs": 2,
+      "mib_per_s": 812.8430453014892,
+      "op": "delete",
+      "raw_samples_ms": [
+        120.577096,
+        119.600685,
+        126.100776
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 102771200,
+        "candidate_roots": 128,
+        "directories": 4099,
+        "dirs_in_candidates": 971,
+        "dirs_outside_candidates": 3128,
+        "files": 32503,
+        "files_in_candidates": 8024,
+        "files_outside_candidates": 24479,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 126.100776,
+        "mean_ms": 122.09285233333333,
+        "median_ms": 120.577096,
+        "min_ms": 119.600685,
+        "n": 3,
+        "spread_ms": 6.500090999999998,
+        "stddev_ms": 2.8619263557494885
+      },
+      "valid_samples": 3,
+      "workload": "historical"
+    },
+    {
+      "files_per_s": 3142.208787326475,
+      "jobs": 1,
+      "mib_per_s": 44.96379892421417,
+      "op": "shred",
+      "raw_samples_ms": [
+        204.080596,
+        222.043804,
+        214.180548
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 10098176,
+        "candidate_roots": 67,
+        "directories": 410,
+        "dirs_in_candidates": 67,
+        "dirs_outside_candidates": 343,
+        "files": 3250,
+        "files_in_candidates": 673,
+        "files_outside_candidates": 2577,
+        "marker_files": 67,
+        "scale": 0.1,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 222.043804,
+        "mean_ms": 213.43498266666663,
+        "median_ms": 214.180548,
+        "min_ms": 204.080596,
+        "n": 3,
+        "spread_ms": 17.96320800000001,
+        "stddev_ms": 7.352374272415562
+      },
+      "valid_samples": 3,
+      "workload": "historical"
+    },
+    {
+      "files_per_s": 3045.693402200821,
+      "jobs": 2,
+      "mib_per_s": 43.582700892986445,
+      "op": "shred",
+      "raw_samples_ms": [
+        226.41374,
+        219.373804,
+        220.967744
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 10098176,
+        "candidate_roots": 67,
+        "directories": 410,
+        "dirs_in_candidates": 67,
+        "dirs_outside_candidates": 343,
+        "files": 3250,
+        "files_in_candidates": 673,
+        "files_outside_candidates": 2577,
+        "marker_files": 67,
+        "scale": 0.1,
+        "workload": "historical"
+      },
+      "stats": {
+        "max_ms": 226.41374,
+        "mean_ms": 222.25176266666665,
+        "median_ms": 220.967744,
+        "min_ms": 219.373804,
+        "n": 3,
+        "spread_ms": 7.039935999999983,
+        "stddev_ms": 3.014045196883561
+      },
+      "valid_samples": 3,
+      "workload": "historical"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        13.299797,
+        12.891444,
+        12.013781,
+        11.957177,
+        12.002905
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 13.299797,
+        "mean_ms": 12.4330208,
+        "median_ms": 12.013781,
+        "min_ms": 11.957177,
+        "n": 5,
+        "spread_ms": 1.34262,
+        "stddev_ms": 0.5565324329267433
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        10.336682,
+        9.841817,
+        8.992878,
+        10.196613,
+        9.857878
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 10.336682,
+        "mean_ms": 9.8451736,
+        "median_ms": 9.857878,
+        "min_ms": 8.992878,
+        "n": 5,
+        "spread_ms": 1.3438040000000004,
+        "stddev_ms": 0.4672623711503424
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        14.382867,
+        14.082882,
+        13.83263,
+        13.769862000000002,
+        13.42916
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 14.382867,
+        "mean_ms": 13.8994802,
+        "median_ms": 13.83263,
+        "min_ms": 13.42916,
+        "n": 5,
+        "spread_ms": 0.9537069999999996,
+        "stddev_ms": 0.31930234455662837
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        10.537881,
+        11.007439000000002,
+        10.877093,
+        10.629616,
+        10.935556
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 11.007439000000002,
+        "mean_ms": 10.797517,
+        "median_ms": 10.877093,
+        "min_ms": 10.537881,
+        "n": 5,
+        "spread_ms": 0.46955800000000103,
+        "stddev_ms": 0.18168981791944205
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        14.340745,
+        14.337905999999998,
+        13.406911,
+        13.746435,
+        13.508999
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 14.340745,
+        "mean_ms": 13.8681992,
+        "median_ms": 13.746435,
+        "min_ms": 13.406911,
+        "n": 5,
+        "spread_ms": 0.9338339999999992,
+        "stddev_ms": 0.4001405049741395
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        10.461221,
+        10.309001,
+        10.435762,
+        10.748853,
+        10.236387
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 10.748853,
+        "mean_ms": 10.4382448,
+        "median_ms": 10.435762,
+        "min_ms": 10.236387,
+        "n": 5,
+        "spread_ms": 0.5124659999999999,
+        "stddev_ms": 0.17576237096079445
+      },
+      "valid_samples": 5,
+      "workload": "broad"
+    },
+    {
+      "files_per_s": 61136.969472304496,
+      "jobs": 1,
+      "mib_per_s": 750.8565373228539,
+      "op": "delete",
+      "raw_samples_ms": [
+        63.98747,
+        62.477123000000006,
+        68.743604
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 68.743604,
+        "mean_ms": 65.069399,
+        "median_ms": 63.98747,
+        "min_ms": 62.477123000000006,
+        "n": 3,
+        "spread_ms": 6.266480999999999,
+        "stddev_ms": 2.6702214392094903
+      },
+      "valid_samples": 3,
+      "workload": "broad"
+    },
+    {
+      "files_per_s": 63939.68382643573,
+      "jobs": 2,
+      "mib_per_s": 785.2782041671904,
+      "op": "delete",
+      "raw_samples_ms": [
+        61.182661,
+        62.981368999999994,
+        59.959314
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 50379264,
+        "candidate_roots": 128,
+        "directories": 2000,
+        "dirs_in_candidates": 448,
+        "dirs_outside_candidates": 1552,
+        "files": 16000,
+        "files_in_candidates": 3912,
+        "files_outside_candidates": 12088,
+        "marker_files": 128,
+        "scale": 1.0,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 62.981368999999994,
+        "mean_ms": 61.374448,
+        "median_ms": 61.182661,
+        "min_ms": 59.959314,
+        "n": 3,
+        "spread_ms": 3.0220549999999946,
+        "stddev_ms": 1.241179760223579
+      },
+      "valid_samples": 3,
+      "workload": "broad"
+    },
+    {
+      "files_per_s": 3099.4276132055315,
+      "jobs": 1,
+      "mib_per_s": 59.589825327132715,
+      "op": "shred",
+      "raw_samples_ms": [
+        86.351222,
+        77.960381,
+        80.014774
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 4999680,
+        "candidate_roots": 25,
+        "directories": 200,
+        "dirs_in_candidates": 25,
+        "dirs_outside_candidates": 175,
+        "files": 1600,
+        "files_in_candidates": 248,
+        "files_outside_candidates": 1352,
+        "marker_files": 25,
+        "scale": 0.1,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 86.351222,
+        "mean_ms": 81.44212566666667,
+        "median_ms": 80.014774,
+        "min_ms": 77.960381,
+        "n": 3,
+        "spread_ms": 8.390841000000009,
+        "stddev_ms": 3.5711391979845284
+      },
+      "valid_samples": 3,
+      "workload": "broad"
+    },
+    {
+      "files_per_s": 3014.3931926833675,
+      "jobs": 2,
+      "mib_per_s": 57.9549472470252,
+      "op": "shred",
+      "raw_samples_ms": [
+        80.81857600000001,
+        82.286405,
+        82.271948
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 4999680,
+        "candidate_roots": 25,
+        "directories": 200,
+        "dirs_in_candidates": 25,
+        "dirs_outside_candidates": 175,
+        "files": 1600,
+        "files_in_candidates": 248,
+        "files_outside_candidates": 1352,
+        "marker_files": 25,
+        "scale": 0.1,
+        "workload": "broad"
+      },
+      "stats": {
+        "max_ms": 82.286405,
+        "mean_ms": 81.79230966666667,
+        "median_ms": 82.271948,
+        "min_ms": 80.81857600000001,
+        "n": 3,
+        "spread_ms": 1.4678289999999947,
+        "stddev_ms": 0.688558974192879
+      },
+      "valid_samples": 3,
+      "workload": "broad"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        20.365388000000003,
+        19.717184,
+        19.334112,
+        19.076131,
+        19.070286
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 20.365388000000003,
+        "mean_ms": 19.512620200000004,
+        "median_ms": 19.334112,
+        "min_ms": 19.070286,
+        "n": 5,
+        "spread_ms": 1.2951020000000035,
+        "stddev_ms": 0.48725903022125816
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        17.983256,
+        17.890000999999998,
+        17.634084,
+        17.719289999999997,
+        17.69434
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 17.983256,
+        "mean_ms": 17.784194199999998,
+        "median_ms": 17.719289999999997,
+        "min_ms": 17.634084,
+        "n": 5,
+        "spread_ms": 0.34917199999999937,
+        "stddev_ms": 0.13087404916544745
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        19.355925,
+        19.283374,
+        19.096246,
+        18.780262,
+        18.980609
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 19.355925,
+        "mean_ms": 19.0992832,
+        "median_ms": 19.096246,
+        "min_ms": 18.780262,
+        "n": 5,
+        "spread_ms": 0.5756629999999987,
+        "stddev_ms": 0.20766403276966344
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        19.73245,
+        19.924549,
+        19.689716,
+        19.95763,
+        19.702876
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 19.95763,
+        "mean_ms": 19.8014442,
+        "median_ms": 19.73245,
+        "min_ms": 19.689716,
+        "n": 5,
+        "spread_ms": 0.2679140000000011,
+        "stddev_ms": 0.11533245533222657
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        19.55859,
+        19.217136999999997,
+        19.085287,
+        19.079353,
+        18.924705
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 19.55859,
+        "mean_ms": 19.1730144,
+        "median_ms": 19.085287,
+        "min_ms": 18.924705,
+        "n": 5,
+        "spread_ms": 0.6338850000000029,
+        "stddev_ms": 0.21388850358782796
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        19.551598,
+        19.450689,
+        19.743185,
+        19.68144,
+        19.632718
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 19.743185,
+        "mean_ms": 19.611925999999997,
+        "median_ms": 19.632718,
+        "min_ms": 19.450689,
+        "n": 5,
+        "spread_ms": 0.29249599999999987,
+        "stddev_ms": 0.10210804698357562
+      },
+      "valid_samples": 5,
+      "workload": "high_fanout"
+    },
+    {
+      "files_per_s": 30099.17267366881,
+      "jobs": 1,
+      "mib_per_s": 1820.5718839770743,
+      "op": "delete",
+      "raw_samples_ms": [
+        32.315365,
+        33.394945,
+        32.924493
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 33.394945,
+        "mean_ms": 32.878267666666666,
+        "median_ms": 32.924493,
+        "min_ms": 32.315365,
+        "n": 3,
+        "spread_ms": 1.07958,
+        "stddev_ms": 0.44194707841651
+      },
+      "valid_samples": 3,
+      "workload": "high_fanout"
+    },
+    {
+      "files_per_s": 22498.67720945751,
+      "jobs": 2,
+      "mib_per_s": 1360.8500007060634,
+      "op": "delete",
+      "raw_samples_ms": [
+        44.047034,
+        44.20921,
+        43.988017
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 62853120,
+        "candidate_roots": 200,
+        "directories": 5200,
+        "dirs_in_candidates": 200,
+        "dirs_outside_candidates": 5000,
+        "files": 20000,
+        "files_in_candidates": 991,
+        "files_outside_candidates": 19009,
+        "marker_files": 200,
+        "scale": 1.0,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 44.20921,
+        "mean_ms": 44.081420333333334,
+        "median_ms": 44.047034,
+        "min_ms": 43.988017,
+        "n": 3,
+        "spread_ms": 0.22119299999999953,
+        "stddev_ms": 0.0935179154042453
+      },
+      "valid_samples": 3,
+      "workload": "high_fanout"
+    },
+    {
+      "files_per_s": 5405.590336781907,
+      "jobs": 1,
+      "mib_per_s": 128.49827456559555,
+      "op": "shred",
+      "raw_samples_ms": [
+        47.951597,
+        41.298788,
+        43.288519
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 5832704,
+        "candidate_roots": 161,
+        "directories": 4200,
+        "dirs_in_candidates": 161,
+        "dirs_outside_candidates": 4039,
+        "files": 2000,
+        "files_in_candidates": 234,
+        "files_outside_candidates": 1766,
+        "marker_files": 161,
+        "scale": 0.1,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 47.951597,
+        "mean_ms": 44.179634666666665,
+        "median_ms": 43.288519,
+        "min_ms": 41.298788,
+        "n": 3,
+        "spread_ms": 6.652808999999998,
+        "stddev_ms": 2.7881334552174657
+      },
+      "valid_samples": 3,
+      "workload": "high_fanout"
+    },
+    {
+      "files_per_s": 4832.525324084843,
+      "jobs": 2,
+      "mib_per_s": 114.8757355351365,
+      "op": "shred",
+      "raw_samples_ms": [
+        48.421888,
+        48.576818,
+        48.361591
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 5832704,
+        "candidate_roots": 161,
+        "directories": 4200,
+        "dirs_in_candidates": 161,
+        "dirs_outside_candidates": 4039,
+        "files": 2000,
+        "files_in_candidates": 234,
+        "files_outside_candidates": 1766,
+        "marker_files": 161,
+        "scale": 0.1,
+        "workload": "high_fanout"
+      },
+      "stats": {
+        "max_ms": 48.576818,
+        "mean_ms": 48.45343233333333,
+        "median_ms": 48.421888,
+        "min_ms": 48.361591,
+        "n": 3,
+        "spread_ms": 0.21522699999999872,
+        "stddev_ms": 0.09065299813513514
+      },
+      "valid_samples": 3,
+      "workload": "high_fanout"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        12.908216,
+        12.790511,
+        12.938896,
+        12.799135,
+        12.794501
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 12.938896,
+        "mean_ms": 12.8462518,
+        "median_ms": 12.799135,
+        "min_ms": 12.790511,
+        "n": 5,
+        "spread_ms": 0.1483850000000011,
+        "stddev_ms": 0.06391820523575428
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        21.324767,
+        22.809044,
+        22.59488,
+        22.364632,
+        20.268769
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 22.809044,
+        "mean_ms": 21.8724184,
+        "median_ms": 22.364632,
+        "min_ms": 20.268769,
+        "n": 5,
+        "spread_ms": 2.540275000000001,
+        "stddev_ms": 0.9500637831342906
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        20.82648,
+        21.293768,
+        20.927149999999997,
+        23.243108,
+        21.400253
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 23.243108,
+        "mean_ms": 21.5381518,
+        "median_ms": 21.293768,
+        "min_ms": 20.82648,
+        "n": 5,
+        "spread_ms": 2.4166279999999993,
+        "stddev_ms": 0.8792513992233166
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        35.156337,
+        35.373699,
+        32.945164999999996,
+        35.133799,
+        35.334362
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 35.373699,
+        "mean_ms": 34.788672399999996,
+        "median_ms": 35.156337,
+        "min_ms": 32.945164999999996,
+        "n": 5,
+        "spread_ms": 2.428534000000006,
+        "stddev_ms": 0.9265897068531702
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        29.901984,
+        21.110815,
+        28.313118000000003,
+        21.154499,
+        21.549815
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 29.901984,
+        "mean_ms": 24.4060462,
+        "median_ms": 21.549815,
+        "min_ms": 21.110815,
+        "n": 5,
+        "spread_ms": 8.791168999999996,
+        "stddev_ms": 3.874524664393267
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        37.240411,
+        36.830817,
+        36.901893,
+        36.277338,
+        36.467732000000005
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 37.240411,
+        "mean_ms": 36.7436382,
+        "median_ms": 36.830817,
+        "min_ms": 36.277338,
+        "n": 5,
+        "spread_ms": 0.9630730000000014,
+        "stddev_ms": 0.33852268681162256
+      },
+      "valid_samples": 5,
+      "workload": "deep_chain"
+    },
+    {
+      "files_per_s": 16750.3220588271,
+      "jobs": 1,
+      "mib_per_s": 101.31664894161308,
+      "op": "delete",
+      "raw_samples_ms": [
+        57.176781000000005,
+        59.760045,
+        62.677573
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 62.677573,
+        "mean_ms": 59.87146633333333,
+        "median_ms": 59.760045,
+        "min_ms": 57.176781000000005,
+        "n": 3,
+        "spread_ms": 5.500791999999997,
+        "stddev_ms": 2.2470705658638206
+      },
+      "valid_samples": 3,
+      "workload": "deep_chain"
+    },
+    {
+      "files_per_s": 12574.657948890384,
+      "jobs": 2,
+      "mib_per_s": 76.05956473518707,
+      "op": "delete",
+      "raw_samples_ms": [
+        78.958814,
+        79.604551,
+        82.533369
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 6348800,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 2001,
+        "files_in_candidates": 1001,
+        "files_outside_candidates": 1000,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 82.533369,
+        "mean_ms": 80.365578,
+        "median_ms": 79.604551,
+        "min_ms": 78.958814,
+        "n": 3,
+        "spread_ms": 3.5745549999999895,
+        "stddev_ms": 1.5553632872639924
+      },
+      "valid_samples": 3,
+      "workload": "deep_chain"
+    },
+    {
+      "files_per_s": 2111.3987286648744,
+      "jobs": 1,
+      "mib_per_s": 12.758342804354395,
+      "op": "shred",
+      "raw_samples_ms": [
+        236.104637,
+        237.283462,
+        244.863218
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 3174400,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 1001,
+        "files_in_candidates": 501,
+        "files_outside_candidates": 500,
+        "marker_files": 1,
+        "scale": 0.1,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 244.863218,
+        "mean_ms": 239.41710566666663,
+        "median_ms": 237.283462,
+        "min_ms": 236.104637,
+        "n": 3,
+        "spread_ms": 8.758580999999992,
+        "stddev_ms": 3.880937322831539
+      },
+      "valid_samples": 3,
+      "workload": "deep_chain"
+    },
+    {
+      "files_per_s": 2668.149113747111,
+      "jobs": 2,
+      "mib_per_s": 16.122563959222266,
+      "op": "shred",
+      "raw_samples_ms": [
+        188.781664,
+        187.770615,
+        184.148099
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 3174400,
+        "candidate_roots": 1,
+        "directories": 1000,
+        "dirs_in_candidates": 500,
+        "dirs_outside_candidates": 500,
+        "files": 1001,
+        "files_in_candidates": 501,
+        "files_outside_candidates": 500,
+        "marker_files": 1,
+        "scale": 0.1,
+        "workload": "deep_chain"
+      },
+      "stats": {
+        "max_ms": 188.781664,
+        "mean_ms": 186.900126,
+        "median_ms": 187.770615,
+        "min_ms": 184.148099,
+        "n": 3,
+        "spread_ms": 4.633564999999976,
+        "stddev_ms": 1.989270297813907
+      },
+      "valid_samples": 3,
+      "workload": "deep_chain"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        24.555439,
+        21.403714,
+        20.434046,
+        20.459139,
+        19.497197
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 24.555439,
+        "mean_ms": 21.269907,
+        "median_ms": 20.459139,
+        "min_ms": 19.497197,
+        "n": 5,
+        "spread_ms": 5.058242,
+        "stddev_ms": 1.7499219377742536
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        10.991146,
+        11.006331,
+        11.802245,
+        11.542756,
+        12.305774
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 12.305774,
+        "mean_ms": 11.5296504,
+        "median_ms": 11.542756,
+        "min_ms": 10.991146,
+        "n": 5,
+        "spread_ms": 1.314627999999999,
+        "stddev_ms": 0.49813604535572387
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        30.20933,
+        29.054115,
+        27.589551,
+        24.23879,
+        23.598873
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 30.20933,
+        "mean_ms": 26.938131799999997,
+        "median_ms": 27.589551,
+        "min_ms": 23.598873,
+        "n": 5,
+        "spread_ms": 6.610456999999997,
+        "stddev_ms": 2.6091977704688767
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        12.926393,
+        12.912663,
+        13.48293,
+        12.900869,
+        12.72729
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 13.48293,
+        "mean_ms": 12.990028999999998,
+        "median_ms": 12.912663,
+        "min_ms": 12.72729,
+        "n": 5,
+        "spread_ms": 0.7556400000000014,
+        "stddev_ms": 0.2568920870614747
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        29.96266,
+        25.739547,
+        24.267137,
+        23.935606,
+        23.52318
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 29.96266,
+        "mean_ms": 25.485626000000003,
+        "median_ms": 24.267137,
+        "min_ms": 23.52318,
+        "n": 5,
+        "spread_ms": 6.43948,
+        "stddev_ms": 2.3599483493430102
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        13.045493,
+        13.058637999999998,
+        13.475687,
+        13.537562,
+        13.527994
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 13.537562,
+        "mean_ms": 13.3290748,
+        "median_ms": 13.475687,
+        "min_ms": 13.045493,
+        "n": 5,
+        "spread_ms": 0.492068999999999,
+        "stddev_ms": 0.22719401311073337
+      },
+      "valid_samples": 5,
+      "workload": "file_heavy"
+    },
+    {
+      "files_per_s": 60156.47266600633,
+      "jobs": 1,
+      "mib_per_s": 626.0571121499581,
+      "op": "delete",
+      "raw_samples_ms": [
+        287.701575,
+        337.846159,
+        290.110095
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 337.846159,
+        "mean_ms": 305.2192763333333,
+        "median_ms": 290.110095,
+        "min_ms": 287.701575,
+        "n": 3,
+        "spread_ms": 50.14458400000001,
+        "stddev_ms": 23.09163407753157
+      },
+      "valid_samples": 3,
+      "workload": "file_heavy"
+    },
+    {
+      "files_per_s": 73857.49007694446,
+      "jobs": 2,
+      "mib_per_s": 768.6455820795677,
+      "op": "delete",
+      "raw_samples_ms": [
+        236.292893,
+        243.057265,
+        220.756007
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 190448128,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 60000,
+        "files_in_candidates": 17452,
+        "files_outside_candidates": 42548,
+        "marker_files": 5,
+        "scale": 1.0,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 243.057265,
+        "mean_ms": 233.3687216666667,
+        "median_ms": 236.292893,
+        "min_ms": 220.756007,
+        "n": 3,
+        "spread_ms": 22.30125799999999,
+        "stddev_ms": 9.33629514620788
+      },
+      "valid_samples": 3,
+      "workload": "file_heavy"
+    },
+    {
+      "files_per_s": 2896.7801573439488,
+      "jobs": 1,
+      "mib_per_s": 29.973459566837526,
+      "op": "shred",
+      "raw_samples_ms": [
+        579.626087,
+        612.451338,
+        605.499867
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 19030528,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 6000,
+        "files_in_candidates": 1754,
+        "files_outside_candidates": 4246,
+        "marker_files": 5,
+        "scale": 0.1,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 612.451338,
+        "mean_ms": 599.1924306666666,
+        "median_ms": 605.499867,
+        "min_ms": 579.626087,
+        "n": 3,
+        "spread_ms": 32.82525099999998,
+        "stddev_ms": 14.123552211997758
+      },
+      "valid_samples": 3,
+      "workload": "file_heavy"
+    },
+    {
+      "files_per_s": 4765.898067966603,
+      "jobs": 2,
+      "mib_per_s": 49.313529256857834,
+      "op": "shred",
+      "raw_samples_ms": [
+        368.031371,
+        365.637005,
+        371.009335
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 19030528,
+        "candidate_roots": 5,
+        "directories": 200,
+        "dirs_in_candidates": 57,
+        "dirs_outside_candidates": 143,
+        "files": 6000,
+        "files_in_candidates": 1754,
+        "files_outside_candidates": 4246,
+        "marker_files": 5,
+        "scale": 0.1,
+        "workload": "file_heavy"
+      },
+      "stats": {
+        "max_ms": 371.009335,
+        "mean_ms": 368.2259036666667,
+        "median_ms": 368.031371,
+        "min_ms": 365.637005,
+        "n": 3,
+        "spread_ms": 5.372330000000034,
+        "stddev_ms": 2.1975538864876447
+      },
+      "valid_samples": 3,
+      "workload": "file_heavy"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        52.686394,
+        48.480072,
+        47.511795,
+        47.208824,
+        46.946144
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 52.686394,
+        "mean_ms": 48.5666458,
+        "median_ms": 47.511795,
+        "min_ms": 46.946144,
+        "n": 5,
+        "spread_ms": 5.740249999999996,
+        "stddev_ms": 2.1242521784792308
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        39.489897000000006,
+        38.983816999999995,
+        39.451275,
+        37.805494,
+        38.959612
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 39.489897000000006,
+        "mean_ms": 38.938019,
+        "median_ms": 38.983816999999995,
+        "min_ms": 37.805494,
+        "n": 5,
+        "spread_ms": 1.6844030000000032,
+        "stddev_ms": 0.6087984294490257
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        50.900917,
+        49.781639000000006,
+        50.769293,
+        50.027152,
+        49.783538
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 50.900917,
+        "mean_ms": 50.2525078,
+        "median_ms": 50.027152,
+        "min_ms": 49.781639000000006,
+        "n": 5,
+        "spread_ms": 1.1192779999999942,
+        "stddev_ms": 0.485785296258088
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        41.564898,
+        41.350528,
+        41.087808,
+        42.065112,
+        43.132364
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 43.132364,
+        "mean_ms": 41.840142,
+        "median_ms": 41.564898,
+        "min_ms": 41.087808,
+        "n": 5,
+        "spread_ms": 2.044556,
+        "stddev_ms": 0.7213787873609822
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        51.360218,
+        51.07471,
+        51.701393,
+        52.3022,
+        50.198561000000005
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 52.3022,
+        "mean_ms": 51.32741639999999,
+        "median_ms": 51.360218,
+        "min_ms": 50.198561000000005,
+        "n": 5,
+        "spread_ms": 2.103638999999994,
+        "stddev_ms": 0.6970383845742187
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        41.449504999999995,
+        41.468983,
+        42.077738,
+        41.634544000000005,
+        42.762593
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 42.762593,
+        "mean_ms": 41.8786726,
+        "median_ms": 41.634544000000005,
+        "min_ms": 41.449504999999995,
+        "n": 5,
+        "spread_ms": 1.3130880000000076,
+        "stddev_ms": 0.4965020599331299
+      },
+      "valid_samples": 5,
+      "workload": "many_small_roots"
+    },
+    {
+      "files_per_s": 71041.64031548046,
+      "jobs": 1,
+      "mib_per_s": 179.2228881656815,
+      "op": "delete",
+      "raw_samples_ms": [
+        253.372528,
+        256.44165000000004,
+        250.809327
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 256.44165000000004,
+        "mean_ms": 253.54116833333333,
+        "median_ms": 253.372528,
+        "min_ms": 250.809327,
+        "n": 3,
+        "spread_ms": 5.632323000000014,
+        "stddev_ms": 2.302476241730828
+      },
+      "valid_samples": 3,
+      "workload": "many_small_roots"
+    },
+    {
+      "files_per_s": 45733.93789229095,
+      "jobs": 2,
+      "mib_per_s": 115.37695920092932,
+      "op": "delete",
+      "raw_samples_ms": [
+        388.690219,
+        393.580803,
+        426.189023
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 47616000,
+        "candidate_roots": 3000,
+        "directories": 6000,
+        "dirs_in_candidates": 3000,
+        "dirs_outside_candidates": 3000,
+        "files": 18000,
+        "files_in_candidates": 18000,
+        "files_outside_candidates": 0,
+        "marker_files": 3000,
+        "scale": 1.0,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 426.189023,
+        "mean_ms": 402.820015,
+        "median_ms": 393.580803,
+        "min_ms": 388.690219,
+        "n": 3,
+        "spread_ms": 37.49880400000001,
+        "stddev_ms": 16.644565762700896
+      },
+      "valid_samples": 3,
+      "workload": "many_small_roots"
+    },
+    {
+      "files_per_s": 3558.0911022303835,
+      "jobs": 1,
+      "mib_per_s": 8.976304050223135,
+      "op": "shred",
+      "raw_samples_ms": [
+        505.889239,
+        492.411468,
+        510.93909
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 4761600,
+        "candidate_roots": 300,
+        "directories": 600,
+        "dirs_in_candidates": 300,
+        "dirs_outside_candidates": 300,
+        "files": 1800,
+        "files_in_candidates": 1800,
+        "files_outside_candidates": 0,
+        "marker_files": 300,
+        "scale": 0.1,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 510.93909,
+        "mean_ms": 503.0799323333334,
+        "median_ms": 505.889239,
+        "min_ms": 492.411468,
+        "n": 3,
+        "spread_ms": 18.527622000000008,
+        "stddev_ms": 7.8203728472178975
+      },
+      "valid_samples": 3,
+      "workload": "many_small_roots"
+    },
+    {
+      "files_per_s": 3550.169417338918,
+      "jobs": 2,
+      "mib_per_s": 8.95631933085176,
+      "op": "shred",
+      "raw_samples_ms": [
+        507.128163,
+        507.018057,
+        504.749707
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 4761600,
+        "candidate_roots": 300,
+        "directories": 600,
+        "dirs_in_candidates": 300,
+        "dirs_outside_candidates": 300,
+        "files": 1800,
+        "files_in_candidates": 1800,
+        "files_outside_candidates": 0,
+        "marker_files": 300,
+        "scale": 0.1,
+        "workload": "many_small_roots"
+      },
+      "stats": {
+        "max_ms": 507.128163,
+        "mean_ms": 506.29864233333336,
+        "median_ms": 507.018057,
+        "min_ms": 504.749707,
+        "n": 3,
+        "spread_ms": 2.3784559999999715,
+        "stddev_ms": 1.0961846964039434
+      },
+      "valid_samples": 3,
+      "workload": "many_small_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        42.771424,
+        37.014740999999994,
+        33.009888000000004,
+        31.102867999999997,
+        30.668047
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 42.771424,
+        "mean_ms": 34.9133936,
+        "median_ms": 33.009888000000004,
+        "min_ms": 30.668047,
+        "n": 5,
+        "spread_ms": 12.103377000000002,
+        "stddev_ms": 4.523952018632143
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        19.87737,
+        20.240181,
+        20.288274,
+        20.188821,
+        19.750953000000003
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 20.288274,
+        "mean_ms": 20.0691198,
+        "median_ms": 20.188821,
+        "min_ms": 19.750953000000003,
+        "n": 5,
+        "spread_ms": 0.537320999999995,
+        "stddev_ms": 0.21429744432764372
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        51.895669,
+        49.715945999999995,
+        49.6124,
+        48.584186,
+        47.967929
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 51.895669,
+        "mean_ms": 49.555226,
+        "median_ms": 49.6124,
+        "min_ms": 47.967929,
+        "n": 5,
+        "spread_ms": 3.92774,
+        "stddev_ms": 1.339343396499493
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        32.262069,
+        31.647921000000004,
+        31.941023,
+        32.042232,
+        31.141033
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 32.262069,
+        "mean_ms": 31.8068556,
+        "median_ms": 31.941023,
+        "min_ms": 31.141033,
+        "n": 5,
+        "spread_ms": 1.1210359999999966,
+        "stddev_ms": 0.3870922686355785
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        60.040173,
+        54.183467,
+        51.002016,
+        49.938994,
+        49.136091
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 60.040173,
+        "mean_ms": 52.860148200000005,
+        "median_ms": 51.002016,
+        "min_ms": 49.136091,
+        "n": 5,
+        "spread_ms": 10.904082000000002,
+        "stddev_ms": 3.9789025606761177
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        31.848211000000003,
+        32.917823,
+        32.257428999999995,
+        32.415344999999995,
+        31.885353999999996
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 32.917823,
+        "mean_ms": 32.2648324,
+        "median_ms": 32.257428999999995,
+        "min_ms": 31.848211000000003,
+        "n": 5,
+        "spread_ms": 1.0696119999999958,
+        "stddev_ms": 0.39158213028257494
+      },
+      "valid_samples": 5,
+      "workload": "few_huge_roots"
+    },
+    {
+      "files_per_s": 62858.57822172717,
+      "jobs": 1,
+      "mib_per_s": 190.270740070923,
+      "op": "delete",
+      "raw_samples_ms": [
+        509.1429189999999,
+        507.69776499999995,
+        524.4418830000001
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 524.4418830000001,
+        "mean_ms": 513.7608556666667,
+        "median_ms": 509.1429189999999,
+        "min_ms": 507.69776499999995,
+        "n": 3,
+        "spread_ms": 16.744118000000128,
+        "stddev_ms": 7.575635339362224
+      },
+      "valid_samples": 3,
+      "workload": "few_huge_roots"
+    },
+    {
+      "files_per_s": 88809.87549165696,
+      "jobs": 2,
+      "mib_per_s": 268.8244184556389,
+      "op": "delete",
+      "raw_samples_ms": [
+        366.870496,
+        355.193019,
+        360.365329
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 101580800,
+        "candidate_roots": 4,
+        "directories": 4008,
+        "dirs_in_candidates": 4004,
+        "dirs_outside_candidates": 4,
+        "files": 32004,
+        "files_in_candidates": 32004,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 1.0,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 366.870496,
+        "mean_ms": 360.8096146666667,
+        "median_ms": 360.365329,
+        "min_ms": 355.193019,
+        "n": 3,
+        "spread_ms": 11.67747700000001,
+        "stddev_ms": 4.777650021128685
+      },
+      "valid_samples": 3,
+      "workload": "few_huge_roots"
+    },
+    {
+      "files_per_s": 2848.56394729603,
+      "jobs": 1,
+      "mib_per_s": 8.612816242019441,
+      "op": "shred",
+      "raw_samples_ms": [
+        1124.777277,
+        1131.976176,
+        1119.524184
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 10158080,
+        "candidate_roots": 4,
+        "directories": 408,
+        "dirs_in_candidates": 404,
+        "dirs_outside_candidates": 4,
+        "files": 3204,
+        "files_in_candidates": 3204,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 0.1,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 1131.976176,
+        "mean_ms": 1125.425879,
+        "median_ms": 1124.777277,
+        "min_ms": 1119.524184,
+        "n": 3,
+        "spread_ms": 12.451991999999793,
+        "stddev_ms": 5.104151226065424
+      },
+      "valid_samples": 3,
+      "workload": "few_huge_roots"
+    },
+    {
+      "files_per_s": 4695.181201594114,
+      "jobs": 2,
+      "mib_per_s": 14.196182237965974,
+      "op": "shred",
+      "raw_samples_ms": [
+        682.401778,
+        676.078985,
+        684.688223
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 10158080,
+        "candidate_roots": 4,
+        "directories": 408,
+        "dirs_in_candidates": 404,
+        "dirs_outside_candidates": 4,
+        "files": 3204,
+        "files_in_candidates": 3204,
+        "files_outside_candidates": 0,
+        "marker_files": 4,
+        "scale": 0.1,
+        "workload": "few_huge_roots"
+      },
+      "stats": {
+        "max_ms": 684.688223,
+        "mean_ms": 681.0563286666667,
+        "median_ms": 682.401778,
+        "min_ms": 676.078985,
+        "n": 3,
+        "spread_ms": 8.609238000000005,
+        "stddev_ms": 3.641192127732016
+      },
+      "valid_samples": 3,
+      "workload": "few_huge_roots"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        14.407506,
+        13.768538,
+        13.295429,
+        12.827708,
+        12.662014
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 14.407506,
+        "mean_ms": 13.392239,
+        "median_ms": 13.295429,
+        "min_ms": 12.662014,
+        "n": 5,
+        "spread_ms": 1.7454920000000005,
+        "stddev_ms": 0.6377560654946374
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        8.193305,
+        8.513671,
+        8.487493,
+        8.303395,
+        8.215765999999999
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 8.513671,
+        "mean_ms": 8.342726,
+        "median_ms": 8.303395,
+        "min_ms": 8.193305,
+        "n": 5,
+        "spread_ms": 0.32036599999999993,
+        "stddev_ms": 0.1342922795368375
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        32.292929,
+        31.524832000000004,
+        31.576629,
+        31.916831,
+        31.524493
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 32.292929,
+        "mean_ms": 31.7671428,
+        "median_ms": 31.576629,
+        "min_ms": 31.524493,
+        "n": 5,
+        "spread_ms": 0.7684360000000012,
+        "stddev_ms": 0.3009141547208435
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        23.99633,
+        23.554702,
+        23.246817,
+        23.714951000000003,
+        23.256056
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 23.99633,
+        "mean_ms": 23.5537712,
+        "median_ms": 23.554702,
+        "min_ms": 23.246817,
+        "n": 5,
+        "spread_ms": 0.7495130000000003,
+        "stddev_ms": 0.2844972080646137
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        31.611917,
+        31.515778,
+        31.363703,
+        31.515186,
+        31.704786
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 31.704786,
+        "mean_ms": 31.542274,
+        "median_ms": 31.515778,
+        "min_ms": 31.363703,
+        "n": 5,
+        "spread_ms": 0.3410829999999976,
+        "stddev_ms": 0.11365183447177558
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        23.681549,
+        23.733697000000003,
+        23.635098,
+        23.374275,
+        24.24709
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 24.24709,
+        "mean_ms": 23.734341800000003,
+        "median_ms": 23.681549,
+        "min_ms": 23.374275,
+        "n": 5,
+        "spread_ms": 0.8728149999999992,
+        "stddev_ms": 0.2846737235512964
+      },
+      "valid_samples": 5,
+      "workload": "nested_markers"
+    },
+    {
+      "files_per_s": 74032.35461442337,
+      "jobs": 1,
+      "mib_per_s": 210.11379941227335,
+      "op": "delete",
+      "raw_samples_ms": [
+        173.810721,
+        171.99704,
+        172.897378
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 173.810721,
+        "mean_ms": 172.90171299999997,
+        "median_ms": 172.897378,
+        "min_ms": 171.99704,
+        "n": 3,
+        "spread_ms": 1.8136810000000023,
+        "stddev_ms": 0.7404385126887095
+      },
+      "valid_samples": 3,
+      "workload": "nested_markers"
+    },
+    {
+      "files_per_s": 58051.71794897984,
+      "jobs": 2,
+      "mib_per_s": 164.75859891525647,
+      "op": "delete",
+      "raw_samples_ms": [
+        220.493044,
+        223.557876,
+        219.346179
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 38092800,
+        "candidate_roots": 200,
+        "directories": 1000,
+        "dirs_in_candidates": 800,
+        "dirs_outside_candidates": 200,
+        "files": 12800,
+        "files_in_candidates": 12800,
+        "files_outside_candidates": 0,
+        "marker_files": 800,
+        "scale": 1.0,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 223.557876,
+        "mean_ms": 221.13236633333335,
+        "median_ms": 220.493044,
+        "min_ms": 219.346179,
+        "n": 3,
+        "spread_ms": 4.211696999999987,
+        "stddev_ms": 1.7778540790095432
+      },
+      "valid_samples": 3,
+      "workload": "nested_markers"
+    },
+    {
+      "files_per_s": 3040.736543169354,
+      "jobs": 1,
+      "mib_per_s": 8.630020096275326,
+      "op": "shred",
+      "raw_samples_ms": [
+        404.1314,
+        423.731792,
+        420.950642
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 3809280,
+        "candidate_roots": 20,
+        "directories": 100,
+        "dirs_in_candidates": 80,
+        "dirs_outside_candidates": 20,
+        "files": 1280,
+        "files_in_candidates": 1280,
+        "files_outside_candidates": 0,
+        "marker_files": 80,
+        "scale": 0.1,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 423.731792,
+        "mean_ms": 416.271278,
+        "median_ms": 420.950642,
+        "min_ms": 404.1314,
+        "n": 3,
+        "spread_ms": 19.600392,
+        "stddev_ms": 8.65895210064081
+      },
+      "valid_samples": 3,
+      "workload": "nested_markers"
+    },
+    {
+      "files_per_s": 4925.483305834321,
+      "jobs": 2,
+      "mib_per_s": 13.979185407793942,
+      "op": "shred",
+      "raw_samples_ms": [
+        255.94724,
+        263.30289899999997,
+        259.872975
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 3809280,
+        "candidate_roots": 20,
+        "directories": 100,
+        "dirs_in_candidates": 80,
+        "dirs_outside_candidates": 20,
+        "files": 1280,
+        "files_in_candidates": 1280,
+        "files_outside_candidates": 0,
+        "marker_files": 80,
+        "scale": 0.1,
+        "workload": "nested_markers"
+      },
+      "stats": {
+        "max_ms": 263.30289899999997,
+        "mean_ms": 259.70770466666664,
+        "median_ms": 259.872975,
+        "min_ms": 255.94724,
+        "n": 3,
+        "spread_ms": 7.355658999999946,
+        "stddev_ms": 3.005208317058917
+      },
+      "valid_samples": 3,
+      "workload": "nested_markers"
+    },
+    {
+      "jobs": 1,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        27.055007,
+        21.035476,
+        19.464764,
+        18.693683,
+        18.667562
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 27.055007,
+        "mean_ms": 20.9832984,
+        "median_ms": 19.464764,
+        "min_ms": 18.667562,
+        "n": 5,
+        "spread_ms": 8.387445,
+        "stddev_ms": 3.1552904241429567
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "jobs": 2,
+      "op": "mark_dry_run",
+      "raw_samples_ms": [
+        18.797523,
+        18.874648,
+        19.21492,
+        18.861915,
+        19.183174
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 19.21492,
+        "mean_ms": 18.986436000000005,
+        "median_ms": 18.874648,
+        "min_ms": 18.797523,
+        "n": 5,
+        "spread_ms": 0.4173969999999976,
+        "stddev_ms": 0.1758413699070838
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "jobs": 1,
+      "op": "list",
+      "raw_samples_ms": [
+        31.581259,
+        28.257457,
+        26.088635,
+        25.138491,
+        24.6865
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 31.581259,
+        "mean_ms": 27.1504684,
+        "median_ms": 26.088635,
+        "min_ms": 24.6865,
+        "n": 5,
+        "spread_ms": 6.8947590000000005,
+        "stddev_ms": 2.533930251812121
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "jobs": 2,
+      "op": "list",
+      "raw_samples_ms": [
+        28.398763,
+        26.609038,
+        25.061056,
+        25.07498,
+        24.406613
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 28.398763,
+        "mean_ms": 25.910089999999997,
+        "median_ms": 25.07498,
+        "min_ms": 24.406613,
+        "n": 5,
+        "spread_ms": 3.9921499999999983,
+        "stddev_ms": 1.4394951991874092
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "jobs": 1,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        30.525715,
+        25.140536,
+        24.14675,
+        24.414329,
+        23.759389
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 30.525715,
+        "mean_ms": 25.597343799999997,
+        "median_ms": 24.414329,
+        "min_ms": 23.759389,
+        "n": 5,
+        "spread_ms": 6.766325999999999,
+        "stddev_ms": 2.5051682693021156
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "jobs": 2,
+      "op": "review_dry_run",
+      "raw_samples_ms": [
+        24.618485999999997,
+        24.603368,
+        24.32578,
+        24.592451,
+        24.737996000000003
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 24.737996000000003,
+        "mean_ms": 24.5756162,
+        "median_ms": 24.603368,
+        "min_ms": 24.32578,
+        "n": 5,
+        "spread_ms": 0.4122160000000008,
+        "stddev_ms": 0.1354080639583919
+      },
+      "valid_samples": 5,
+      "workload": "wide_dir"
+    },
+    {
+      "files_per_s": 82796.519752157,
+      "jobs": 1,
+      "mib_per_s": 250.64517175438556,
+      "op": "delete",
+      "raw_samples_ms": [
+        362.346148,
+        354.686667,
+        363.090469
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 363.090469,
+        "mean_ms": 360.04109466666665,
+        "median_ms": 362.346148,
+        "min_ms": 354.686667,
+        "n": 3,
+        "spread_ms": 8.403802000000042,
+        "stddev_ms": 3.798326400397452
+      },
+      "valid_samples": 3,
+      "workload": "wide_dir"
+    },
+    {
+      "files_per_s": 83115.73942486235,
+      "jobs": 2,
+      "mib_per_s": 251.61152722357815,
+      "op": "delete",
+      "raw_samples_ms": [
+        360.954498,
+        356.333002,
+        388.1341
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 1.0,
+      "shape": {
+        "bytes": 95232000,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 30001,
+        "files_in_candidates": 30001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 1.0,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 388.1341,
+        "mean_ms": 368.4738666666667,
+        "median_ms": 360.954498,
+        "min_ms": 356.333002,
+        "n": 3,
+        "spread_ms": 31.801097999999968,
+        "stddev_ms": 14.029329690814096
+      },
+      "valid_samples": 3,
+      "workload": "wide_dir"
+    },
+    {
+      "files_per_s": 2862.716272872459,
+      "jobs": 1,
+      "mib_per_s": 8.663538370580206,
+      "op": "shred",
+      "raw_samples_ms": [
+        1048.8348059999998,
+        1033.566915,
+        1048.305076
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 9523200,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 3001,
+        "files_in_candidates": 3001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 0.1,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 1048.8348059999998,
+        "mean_ms": 1043.5689323333334,
+        "median_ms": 1048.305076,
+        "min_ms": 1033.566915,
+        "n": 3,
+        "spread_ms": 15.267890999999963,
+        "stddev_ms": 7.075799908629939
+      },
+      "valid_samples": 3,
+      "workload": "wide_dir"
+    },
+    {
+      "files_per_s": 4863.925855630321,
+      "jobs": 2,
+      "mib_per_s": 14.719868916533676,
+      "op": "shred",
+      "raw_samples_ms": [
+        615.481343,
+        616.991313,
+        617.594392
+      ],
+      "rejected_samples": 0,
+      "rejection_notes": [],
+      "scale": 0.1,
+      "shape": {
+        "bytes": 9523200,
+        "candidate_roots": 1,
+        "directories": 1,
+        "dirs_in_candidates": 1,
+        "dirs_outside_candidates": 0,
+        "files": 3001,
+        "files_in_candidates": 3001,
+        "files_outside_candidates": 0,
+        "marker_files": 1,
+        "scale": 0.1,
+        "workload": "wide_dir"
+      },
+      "stats": {
+        "max_ms": 617.594392,
+        "mean_ms": 616.6890159999999,
+        "median_ms": 616.991313,
+        "min_ms": 615.481343,
+        "n": 3,
+        "spread_ms": 2.1130489999999327,
+        "stddev_ms": 0.8887375414061323
+      },
+      "valid_samples": 3,
+      "workload": "wide_dir"
+    }
+  ],
+  "settings": {
+    "destructive_reps": 3,
+    "jobs": [
+      1,
+      2
+    ],
+    "reps": 5,
+    "scale": 1.0,
+    "shred_scale": 0.1
+  },
+  "unix_time": 1794327422
+}
