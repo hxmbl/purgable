@@ -66,6 +66,7 @@ struct Shape {
     cand_roots: u64,
     markers: u64,
     cand_files: u64,
+    cand_bytes: u64,
     cand_dirs: u64,
     out_files: u64,
     out_dirs: u64,
@@ -79,6 +80,7 @@ impl Shape {
             "candidate_roots": self.cand_roots,
             "marker_files": self.markers,
             "files_in_candidates": self.cand_files,
+            "bytes_in_candidates": self.cand_bytes,
             "dirs_in_candidates": self.cand_dirs,
             "files_outside_candidates": self.out_files,
             "dirs_outside_candidates": self.out_dirs,
@@ -109,6 +111,7 @@ impl Builder {
         self.0.bytes += size as u64;
         if in_cand {
             self.0.cand_files += 1;
+            self.0.cand_bytes += size as u64;
         } else {
             self.0.out_files += 1;
         }
@@ -796,9 +799,18 @@ fn run(a: &Args) -> io::Result<usize> {
                     "stats": stats(&good),
                 });
                 if op.destructive() && !good.is_empty() {
+                    // Throughput counts only what the operation touched: files
+                    // inside candidate directories. Shred keeps each marker.
                     let med = g["stats"]["median_ms"].as_f64().unwrap_or(f64::NAN) / 1000.0;
-                    g["files_per_s"] = json!(shape.cand_files as f64 / med);
-                    g["mib_per_s"] = json!(shape.bytes as f64 / 1048576.0 / med);
+                    let touched = if op == Op::Shred {
+                        shape.cand_files - shape.markers
+                    } else {
+                        shape.cand_files
+                    };
+                    g["files_touched"] = json!(touched);
+                    g["bytes_touched"] = json!(shape.cand_bytes);
+                    g["files_per_s"] = json!(touched as f64 / med);
+                    g["mib_per_s"] = json!(shape.cand_bytes as f64 / 1048576.0 / med);
                 }
                 eprintln!(
                     "{w:18} {:15} jobs={j:<3} median={:>10.2}ms valid={}/{}",
@@ -884,7 +896,12 @@ fn summary(r: &Value) -> String {
         } else {
             ""
         };
-        let _ = writeln!(m, "| workload | op | jobs | files | dirs | candidates | n | median ms | min | max | spread |{extra} rejected |");
+        let files_col = if destructive {
+            "files removed"
+        } else {
+            "files"
+        };
+        let _ = writeln!(m, "| workload | op | jobs | {files_col} | dirs | candidates | n | median ms | min | max | spread |{extra} rejected |");
         let cols = 12 + if destructive { 2 } else { 0 };
         let _ = writeln!(m, "|{}", "---|".repeat(cols));
         for g in r["results"].as_array().unwrap() {
@@ -906,7 +923,11 @@ fn summary(r: &Value) -> String {
                 g["workload"].as_str().unwrap(),
                 op,
                 g["jobs"],
-                g["shape"]["files"],
+                if destructive {
+                    &g["files_touched"]
+                } else {
+                    &g["shape"]["files"]
+                },
                 g["shape"]["directories"],
                 g["shape"]["candidate_roots"],
                 st["n"],
@@ -968,6 +989,7 @@ mod tests {
             assert_eq!(s.dirs, s.cand_dirs + s.out_dirs, "{name}");
             assert_eq!(s.files, s.cand_files + s.out_files, "{name}");
             assert!(s.cand_roots > 0 && s.markers >= s.cand_roots, "{name}");
+            assert!(s.cand_bytes > 0 && s.cand_bytes <= s.bytes, "{name}");
         }
     }
 
