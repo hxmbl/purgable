@@ -4,7 +4,6 @@
 //! and hands off to the CLI.
 
 mod action;
-mod benchmark;
 mod cli;
 mod config;
 mod dirfd;

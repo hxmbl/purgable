@@ -11,12 +11,11 @@ path = "src/main.rs"
 libc = "0.2"
 rand = "0.10"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
 toml = "0.9"
-chrono = "0.4"
 
 [dev-dependencies]
 tempfile = "3"
+serde_json = { version = "1", features = ["float_roundtrip"] }
 
 # Every hot path here is syscall-bound, so the release profile is tuned for
 # throughput rather than for fast rebuilds.

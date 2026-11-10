@@ -189,6 +189,13 @@ synthetic trees (broad/shallow, deep/narrow, mixed) run through
 pinned through the internal `THREAD_POOL_OVERRIDE`. The tests are `#[ignore]`d;
 run them with `cargo test -- --ignored`.
 
+### Filesystem benchmarks
+
+`BENCHMARKS.md` documents the end-to-end harness (`examples/bench.rs`): fixture
+workloads, the `PURGABLE_JOBS` sweep, median/spread reporting and the rules that
+reject destructive samples whose final filesystem state is wrong. It is a
+standalone runner, so keep benchmark code out of `src/`.
+
 ## Version Management
 
 - Update version in `Cargo.toml`
