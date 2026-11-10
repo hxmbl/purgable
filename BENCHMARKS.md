@@ -54,6 +54,16 @@ lists inner markers as separate rows, so the delete/shred summary can show
 skipped rows once the outer directory is gone; for that workload the on-disk
 recount is the authority.
 
+## Reading shred across jobs
+
+Review acts on one candidate directory at a time, and shred hands a candidate's
+files to workers in batches of 16 (`SHRED_BATCH` in `src/shred.rs`). A candidate
+with 16 or fewer files therefore shreds on a single worker whatever
+`PURGABLE_JOBS` says. Trees of many small candidates (`historical` at shred scale,
+`broad`, `many_small_roots`) come out flat across jobs for that reason, while
+`few_huge_roots`, `wide_dir` and `file_heavy` show the scaling. Judge shred's
+job scaling from those, not from `historical` alone.
+
 ## Safety boundaries
 
 Destructive runs only ever act on fixtures this runner generated, under `--work`.
@@ -90,6 +100,15 @@ cold disk reads. Results are comparable only on the same machine, filesystem and
 core count. The historical baseline in AGENTS.md was macOS APFS with 12 logical
 cores; this harness reproduces its tree shape, not its hardware. Compare trends
 between commits on one machine.
+
+## Recomputing a report
+
+`bench rederive ORIGINAL_results.json OUT_DIR` recomputes only the derived
+throughput and shape-detail fields of an earlier results file from its own raw
+samples, after checking that the rebuilt fixture shape matches the recorded one.
+Timings, samples and environment are copied unchanged and the summary says so.
+`benchmarks/macos-historical/` holds a macOS run made before the throughput fix
+(`*.original.*`, verbatim) and its derived corrected report.
 
 ## Baseline
 

@@ -484,6 +484,24 @@ fn run_once(
     })
 }
 
+/// Files and bytes an operation actually acts on: everything inside candidate
+/// directories, except that shred keeps every marker file.
+fn touched(op: Op, shape: &Shape) -> (u64, u64) {
+    match op {
+        Op::Shred => (shape.cand_files - shape.markers, shape.cand_bytes),
+        _ => (shape.cand_files, shape.cand_bytes),
+    }
+}
+
+fn throughput(g: &mut Value, op: Op, shape: &Shape) {
+    let med = g["stats"]["median_ms"].as_f64().unwrap_or(f64::NAN) / 1000.0;
+    let (files, bytes) = touched(op, shape);
+    g["files_touched"] = json!(files);
+    g["bytes_touched"] = json!(bytes);
+    g["files_per_s"] = json!(files as f64 / med);
+    g["mib_per_s"] = json!(bytes as f64 / 1048576.0 / med);
+}
+
 fn stats(v: &[f64]) -> Value {
     let mut s = v.to_vec();
     s.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -608,8 +626,9 @@ fn main() {
         Some("gen") => cmd_gen(&parse(&argv[1..])),
         Some("run") => cmd_run(&parse(&argv[1..])),
         Some("merge") => cmd_merge(&argv[1..]),
+        Some("rederive") => cmd_rederive(&argv[1..]),
         _ => {
-            eprintln!("usage: bench <gen|run|merge|list-workloads> [--flag value]...\n  gen --workload NAME --dir PATH [--scale F]\n  run [--bin PATH] [--work PATH] [--out DIR] [--workloads a,b] [--jobs 1,2,4] [--reps 5] [--destructive-reps 3] [--scale F] [--shred-scale F] [--all-jobs true]");
+            eprintln!("usage: bench <gen|run|merge|rederive|list-workloads> [--flag value]...\n  gen --workload NAME --dir PATH [--scale F]\n  run [--bin PATH] [--work PATH] [--out DIR] [--workloads a,b] [--jobs 1,2,4] [--reps 5] [--destructive-reps 3] [--scale F] [--shred-scale F] [--all-jobs true]");
             2
         }
     };
@@ -644,6 +663,83 @@ fn cmd_merge(a: &[String]) -> i32 {
         serde_json::to_string_pretty(&m).unwrap(),
     );
     let _ = fs::write(Path::new(out).join("summary.md"), summary(&m));
+    0
+}
+
+/// Recompute the derived throughput fields of an earlier results.json from its
+/// own raw samples, without re-running anything. Fixture shapes are rebuilt
+/// deterministically and must match the shape the original run recorded.
+/// usage: bench rederive ORIGINAL_results.json OUT_DIR
+fn cmd_rederive(a: &[String]) -> i32 {
+    let (Some(inp), Some(out)) = (a.first(), a.get(1)) else {
+        eprintln!("usage: bench rederive ORIGINAL_results.json OUT_DIR");
+        return 2;
+    };
+    let mut r: Value = match fs::read_to_string(inp)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+    {
+        Some(v) => v,
+        None => {
+            eprintln!("cannot read {inp}");
+            return 1;
+        }
+    };
+    let scratch = std::env::temp_dir().join(format!("purgable-rederive-{}", std::process::id()));
+    let mut cache: BTreeMap<String, Shape> = BTreeMap::new();
+    for g in r["results"].as_array_mut().unwrap() {
+        let w = g["workload"].as_str().unwrap().to_string();
+        let sc = g["scale"].as_f64().unwrap();
+        let key = format!("{w}@{sc}");
+        if !cache.contains_key(&key) {
+            let shape = fresh(&scratch, &w, sc).map(|(_, s)| s);
+            let _ = fs::remove_dir_all(&scratch);
+            match shape {
+                Ok(s) => cache.insert(key.clone(), s),
+                Err(e) => {
+                    eprintln!("cannot rebuild {key}: {e}");
+                    return 1;
+                }
+            };
+        }
+        let shape = &cache[&key];
+        for (field, have) in [
+            ("directories", shape.dirs),
+            ("files", shape.files),
+            ("bytes", shape.bytes),
+            ("candidate_roots", shape.cand_roots),
+        ] {
+            if g["shape"][field].as_u64() != Some(have) {
+                eprintln!(
+                    "{key}: recorded {field} {} != rebuilt {have}",
+                    g["shape"][field]
+                );
+                return 1;
+            }
+        }
+        g["shape"] = shape.to_json(&w, sc);
+        let op = match g["op"].as_str().unwrap() {
+            "delete" => Op::Delete,
+            "shred" => Op::Shred,
+            _ => continue,
+        };
+        throughput(g, op, shape);
+    }
+    r["derivation"] = json!(format!(
+        "Derived from {inp} by `bench rederive`: timings, samples and environment are copied unchanged from the original run; only shape detail and throughput fields (files_touched, bytes_touched, files_per_s, mib_per_s) were recomputed. The benchmark was not re-run."
+    ));
+    let _ = fs::create_dir_all(out);
+    let _ = fs::write(
+        Path::new(out).join("results.json"),
+        serde_json::to_string_pretty(&r).unwrap(),
+    );
+    let mut md = summary(&r);
+    md = md.replacen(
+        "\n",
+        &format!("\n\n> {}\n", r["derivation"].as_str().unwrap()),
+        1,
+    );
+    let _ = fs::write(Path::new(out).join("summary.md"), md);
     0
 }
 
@@ -799,18 +895,7 @@ fn run(a: &Args) -> io::Result<usize> {
                     "stats": stats(&good),
                 });
                 if op.destructive() && !good.is_empty() {
-                    // Throughput counts only what the operation touched: files
-                    // inside candidate directories. Shred keeps each marker.
-                    let med = g["stats"]["median_ms"].as_f64().unwrap_or(f64::NAN) / 1000.0;
-                    let touched = if op == Op::Shred {
-                        shape.cand_files - shape.markers
-                    } else {
-                        shape.cand_files
-                    };
-                    g["files_touched"] = json!(touched);
-                    g["bytes_touched"] = json!(shape.cand_bytes);
-                    g["files_per_s"] = json!(touched as f64 / med);
-                    g["mib_per_s"] = json!(shape.cand_bytes as f64 / 1048576.0 / med);
+                    throughput(&mut g, op, &shape);
                 }
                 eprintln!(
                     "{w:18} {:15} jobs={j:<3} median={:>10.2}ms valid={}/{}",
@@ -991,6 +1076,68 @@ mod tests {
             assert!(s.cand_roots > 0 && s.markers >= s.cand_roots, "{name}");
             assert!(s.cand_bytes > 0 && s.cand_bytes <= s.bytes, "{name}");
         }
+    }
+
+    /// Bytes and files under any directory named like a candidate, counted from disk.
+    fn candidate_census(
+        root: &Path,
+        in_cand: bool,
+        files: &mut u64,
+        bytes: &mut u64,
+        markers: &mut u64,
+    ) {
+        for e in fs::read_dir(root).unwrap() {
+            let e = e.unwrap();
+            let t = e.file_type().unwrap();
+            let name = e.file_name();
+            if t.is_dir() {
+                candidate_census(&e.path(), in_cand || name == CAND, files, bytes, markers);
+            } else {
+                if name == MARKER {
+                    *markers += 1;
+                }
+                if in_cand {
+                    *files += 1;
+                    *bytes += e.metadata().unwrap().len();
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn candidate_counts_match_disk_and_shred_excludes_markers() {
+        for (name, _) in WORKLOADS {
+            let d = tempfile::tempdir().unwrap();
+            let s = build(name, 0.05, d.path()).unwrap();
+            let (mut f, mut b, mut m) = (0, 0, 0);
+            candidate_census(d.path(), false, &mut f, &mut b, &mut m);
+            assert_eq!((f, b, m), (s.cand_files, s.cand_bytes, s.markers), "{name}");
+            // delete touches every candidate file; shred keeps each marker
+            assert_eq!(touched(Op::Delete, &s), (f, b), "{name}");
+            assert_eq!(touched(Op::Shred, &s), (f - m, b), "{name}");
+            assert!(
+                touched(Op::Delete, &s).1 < s.bytes || s.cand_files == s.files,
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn throughput_uses_touched_bytes_not_fixture_bytes() {
+        let shape = Shape {
+            bytes: 1_000_000,
+            cand_bytes: 262_144,
+            cand_files: 110,
+            markers: 10,
+            ..Shape::default()
+        };
+        let mut g = json!({"stats": {"median_ms": 1000.0}});
+        throughput(&mut g, Op::Shred, &shape);
+        assert_eq!(g["files_touched"], 100);
+        assert_eq!(g["files_per_s"], 100.0);
+        assert_eq!(g["mib_per_s"], 0.25);
+        throughput(&mut g, Op::Delete, &shape);
+        assert_eq!(g["files_touched"], 110);
     }
 
     #[test]
