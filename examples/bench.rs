@@ -227,7 +227,7 @@ fn build(workload: &str, scale: f64, root: &Path) -> io::Result<Shape> {
             Some((1, 25)),
         )?,
         "deep_chain" => {
-            let levels = 1000usize;
+            let levels = n(1000, scale);
             let mut p = root.to_path_buf();
             for i in 0..levels {
                 let in_cand = i >= levels / 2;
